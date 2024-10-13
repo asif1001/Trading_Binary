@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Gold & BTC Prediction with TP/SL and Patterns</title>
+    <title>Gold & BTC Prediction with MA Cross</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -68,7 +68,7 @@
 <body>
 
     <div class="container">
-        <h1>Gold & Bitcoin Prediction with TP/SL</h1>
+        <h1>Gold & Bitcoin Prediction with MA Cross</h1>
 
         <!-- Asset Selection -->
         <div class="form-group">
@@ -92,31 +92,15 @@
 
         <!-- Predict Button -->
         <div class="form-group">
-            <button class="btn" onclick="predictAndShowPrice()">Predict & Show TP/SL</button>
+            <button class="btn" onclick="predictAndShowPrice()">Predict & Show MA Cross</button>
         </div>
 
         <!-- Live Market Price -->
         <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
         <div id="loading-indicator" class="loading"></div>
 
-        <!-- Prediction Result with TP and SL -->
+        <!-- Prediction Result with MA Cross Signal -->
         <div id="patterns" class="prediction-result"></div>
-
-        <!-- Candlestick Patterns -->
-        <h3>Detected Candlestick Patterns</h3>
-        <table id="candlestick-patterns-table">
-            <thead>
-                <tr>
-                    <th>Asset</th>
-                    <th>Pattern</th>
-                    <th>Time Frame</th>
-                    <th>Suggested Action</th>
-                </tr>
-            </thead>
-            <tbody id="pattern-list">
-                <!-- Detected patterns will be shown here -->
-            </tbody>
-        </table>
 
         <!-- Prediction Table -->
         <h3>Prediction History</h3>
@@ -125,11 +109,11 @@
                 <tr>
                     <th>Asset</th>
                     <th>Time Frame</th>
-                    <th>Prediction</th>
-                    <th>Entry Price</th>
-                    <th>TP</th>
-                    <th>SL</th>
-                    <th>Result</th>
+                    <th>Signal</th>
+                    <th>Current Price</th>
+                    <th>Fast MA (5)</th>
+                    <th>Slow MA (15)</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="prediction-table">
@@ -141,85 +125,76 @@
     <!-- Custom Script -->
     <script>
         const apiKey = '6ecda4d1ff2c4f0b91b7ddf7d7140721'; // Your Twelve Data API key
-        const twelveDataUrl = 'https://api.twelvedata.com/price';
+        const twelveDataUrl = 'https://api.twelvedata.com/time_series';
 
-        // Function to fetch live price from Twelve Data
-        async function fetchRealTimePrice(symbol) {
+        // Function to fetch historical data from Twelve Data
+        async function fetchHistoricalData(symbol, interval) {
             try {
-                document.getElementById('loading-indicator').innerHTML = "Fetching live price...";
-                const response = await fetch(`${twelveDataUrl}?symbol=${symbol}&apikey=${apiKey}`);
+                const response = await fetch(`${twelveDataUrl}?symbol=${symbol}&interval=${interval}&outputsize=30&apikey=${apiKey}`);
                 const data = await response.json();
-                document.getElementById('loading-indicator').innerHTML = ""; // Clear loading indicator
-                return parseFloat(data.price).toFixed(2); // Return price with 2 decimal places
+                return data.values.map(value => parseFloat(value.close)); // Return close prices
             } catch (error) {
-                console.error('Error fetching price:', error);
-                document.getElementById('loading-indicator').innerHTML = "Error fetching price.";
-                return 'Error';
+                console.error('Error fetching historical data:', error);
+                return [];
             }
         }
 
-        // Function to calculate TP and SL
-        function calculateTPandSL(currentPrice, asset) {
-            let tp, sl;
-            if (asset === 'XAU/USD') { // For Gold
-                tp = currentPrice + 10; // Example: Add $10 for TP
-                sl = currentPrice - 10; // Example: Subtract $10 for SL
-            } else if (asset === 'BTC/USD') { // For Bitcoin
-                tp = currentPrice + 100; // Example: Add $100 for TP
-                sl = currentPrice - 100; // Example: Subtract $100 for SL
+        // Function to calculate moving average
+        function calculateMA(prices, period) {
+            let ma = [];
+            for (let i = period - 1; i < prices.length; i++) {
+                const slice = prices.slice(i - period + 1, i + 1);
+                const avg = slice.reduce((acc, val) => acc + val, 0) / period;
+                ma.push(avg.toFixed(2)); // Round to 2 decimal places
             }
-            return { tp, sl };
+            return ma;
         }
 
-        // Function to detect candlestick patterns (dummy logic for now)
-        function detectCandlestickPatterns(asset) {
-            const patterns = {
-                "XAU/USD": { pattern: "Bullish Engulfing", timeFrame: "1h", action: "Buy" },
-                "BTC/USD": { pattern: "Doji", timeFrame: "4h", action: "Wait" }
-            };
-            return patterns[asset] || null;
+        // Function to check for MA crossover
+        function checkMACross(fastMA, slowMA) {
+            if (fastMA[fastMA.length - 1] > slowMA[slowMA.length - 1] && fastMA[fastMA.length - 2] < slowMA[slowMA.length - 2]) {
+                return 'Buy';
+            } else if (fastMA[fastMA.length - 1] < slowMA[slowMA.length - 1] && fastMA[fastMA.length - 2] > slowMA[slowMA.length - 2]) {
+                return 'Sell';
+            } else {
+                return 'No Signal';
+            }
         }
 
-        // Main function to fetch price, predict and show TP/SL
+        // Main function to fetch price, calculate MA, and show buy/sell signal
         async function predictAndShowPrice() {
             const assetPair = document.getElementById("asset-pair").value;
             const timeFrame = document.getElementById("time-frame").value;
 
-            // Fetch and show the live price
-            const currentPrice = await fetchRealTimePrice(assetPair);
-            document.getElementById('price-value').innerHTML = currentPrice;
-
-            // Calculate TP and SL
-            const { tp, sl } = calculateTPandSL(currentPrice, assetPair);
-
-            // Create a simple prediction message
-            const prediction = Math.random() > 0.5 ? 'Up' : 'Down';
-            const nextCandle = `Prediction: The next candle will go ${prediction}. <br> TP: ${tp}, SL: ${sl}`;
-            document.getElementById('patterns').innerHTML = nextCandle;
-
-            // Detect candlestick pattern (mock detection for demo purposes)
-            const detectedPattern = detectCandlestickPatterns(assetPair);
-            const patternTableBody = document.getElementById('pattern-list');
-            if (detectedPattern) {
-                const row = `<tr>
-                    <td>${assetPair}</td>
-                    <td>${detectedPattern.pattern}</td>
-                    <td>${detectedPattern.timeFrame}</td>
-                    <td>${detectedPattern.action}</td>
-                </tr>`;
-                patternTableBody.innerHTML = row; // Replace with latest detected pattern
+            // Fetch historical data for the selected asset and time frame
+            const prices = await fetchHistoricalData(assetPair, timeFrame);
+            if (prices.length < 15) {
+                alert('Not enough data to calculate moving averages.');
+                return;
             }
+
+            // Calculate 5-period (fast) and 15-period (slow) moving averages
+            const fastMA = calculateMA(prices, 5);
+            const slowMA = calculateMA(prices, 15);
+
+            // Check for MA cross (Buy/Sell signal)
+            const signal = checkMACross(fastMA, slowMA);
+            const currentPrice = prices[prices.length - 1];
+
+            // Show the signal in the prediction result section
+            const resultMessage = `Signal: ${signal}. Fast MA: ${fastMA[fastMA.length - 1]}, Slow MA: ${slowMA[slowMA.length - 1]}.`;
+            document.getElementById('patterns').innerHTML = resultMessage;
 
             // Update prediction history table
             const predictionTableBody = document.getElementById('prediction-table');
             const row = `<tr>
                 <td>${assetPair}</td>
                 <td>${timeFrame}</td>
-                <td>${prediction}</td>
+                <td>${signal}</td>
                 <td>${currentPrice}</td>
-                <td>${tp}</td>
-                <td>${sl}</td>
-                <td>Pending</td>
+                <td>${fastMA[fastMA.length - 1]}</td>
+                <td>${slowMA[slowMA.length - 1]}</td>
+                <td>${signal === 'Buy' ? 'Go Long' : signal === 'Sell' ? 'Go Short' : 'Wait'}</td>
             </tr>`;
             predictionTableBody.innerHTML = row + predictionTableBody.innerHTML; // Insert latest prediction at the top
         }
