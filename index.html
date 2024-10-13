@@ -3,87 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candlestick Pattern Recognition</title>
-    <script src="https://code.highcharts.com/stock/highstock.js"></script>
-    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Binary Trading Prediction with Candlestick Patterns</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        #tradingview-widget-container {
+            margin-top: 20px;
+            width: 100%;
+            height: 500px;
+        }
+        #patterns {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
 </head>
 <body>
-    <div id="container" style="height: 500px; min-width: 310px"></div>
+    <div class="container">
+        <h1>Binary Trading Prediction Tool with Candlestick Patterns</h1>
+        
+        <!-- Currency Pair Selection -->
+        <div class="form-group">
+            <label for="currency-pair">Select Asset</label>
+            <select id="currency-pair">
+                <option value="USD/EUR">USD/EUR</option>
+                <option value="USD/INR">USD/INR</option>
+                <option value="USD/PKR">USD/PKR</option>
+                <option value="GBP/USD">GBP/USD</option>
+                <option value="BTC/USD">BTC/USD</option> <!-- Bitcoin -->
+                <option value="XAU/USD">XAU/USD (Gold)</option> <!-- Gold -->
+            </select>
+        </div>
 
+        <!-- Time Frame Selection -->
+        <div class="form-group">
+            <label for="time-frame">Select Time Frame</label>
+            <select id="time-frame">
+                <option value="1m">1 Minute</option>
+                <option value="5m">5 Minutes</option>
+                <option value="15m">15 Minutes</option>
+                <option value="1h">1 Hour</option>
+                <option value="4h">4 Hours</option>
+                <option value="1d">1 Day</option>
+            </select>
+        </div>
+
+        <!-- Predict Button -->
+        <div class="form-group">
+            <button class="btn" onclick="predictAndShowChart()">Predict & Show Chart</button>
+        </div>
+
+        <!-- Placeholder for Pattern Detection -->
+        <div id="patterns"></div>
+
+        <!-- TradingView Live Chart -->
+        <div id="tradingview-widget-container">
+            <div id="tradingview_chart"></div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        // Sample static data for testing (you can replace this with live data)
-        const forexData = [
-            [1634236800000, 1.158, 1.159, 1.156, 1.157], // [timestamp, open, high, low, close]
-            [1634238600000, 1.157, 1.160, 1.155, 1.159],
-            [1634240400000, 1.159, 1.162, 1.158, 1.160],
-            [1634242200000, 1.160, 1.165, 1.158, 1.164],
-            [1634244000000, 1.164, 1.166, 1.160, 1.161],
-            [1634245800000, 1.161, 1.163, 1.159, 1.160], // Example Bearish Engulfing
-            [1634247600000, 1.160, 1.164, 1.158, 1.163], // Example Bullish Engulfing
-            [1634249400000, 1.163, 1.166, 1.161, 1.162],
-            [1634251200000, 1.162, 1.165, 1.160, 1.164],
-            [1634253000000, 1.164, 1.168, 1.162, 1.167]
-        ];
+        function getTradingViewUrl(symbol, interval) {
+            return `https://s.tradingview.com/widgetembed/?symbol=${symbol}&interval=${interval}&theme=light&style=1&locale=en&toolbar_bg=%23f1f3f6&hide_side_toolbar=false&allow_symbol_change=true&save_image=true&studies=[]&show_popup_button=true&popup_width=600&popup_height=400`;
+        }
 
-        // Function to detect basic candlestick patterns
         function detectPatterns(data) {
             const patterns = [];
 
             for (let i = 1; i < data.length; i++) {
-                const [prevTime, prevOpen, prevHigh, prevLow, prevClose] = data[i - 1];
-                const [time, open, high, low, close] = data[i];
+                const prevCandle = data[i - 1];
+                const currentCandle = data[i];
+
+                const [prevOpen, prevClose] = [prevCandle.open, prevCandle.close];
+                const [open, close] = [currentCandle.open, currentCandle.close];
 
                 // Bullish Engulfing Pattern
                 if (prevOpen > prevClose && open < close && open < prevClose && close > prevOpen) {
-                    patterns.push({ time, type: 'Bullish Engulfing', signal: 'Bullish reversal' });
+                    patterns.push({ type: 'Bullish Engulfing', time: currentCandle.time });
                 }
 
                 // Bearish Engulfing Pattern
                 if (prevOpen < prevClose && open > close && open > prevClose && close < prevOpen) {
-                    patterns.push({ time, type: 'Bearish Engulfing', signal: 'Bearish reversal' });
+                    patterns.push({ type: 'Bearish Engulfing', time: currentCandle.time });
                 }
+
+                // Additional patterns like Doji, Hammer, etc., can be added here...
             }
 
             return patterns;
         }
 
-        // Detect patterns
-        const patterns = detectPatterns(forexData);
-
-        // Create the chart with detected patterns
-        Highcharts.stockChart('container', {
-            rangeSelector: {
-                selected: 1
-            },
-
-            title: {
-                text: 'Forex Live Chart with Candlestick Pattern Detection'
-            },
-
-            series: [{
-                type: 'candlestick',
-                name: 'EUR/USD',
-                data: forexData,
-                tooltip: {
-                    valueDecimals: 4
-                }
-            }],
-
-            // Highlight detected patterns with plot bands
-            xAxis: {
-                plotBands: patterns.map(pattern => ({
-                    from: pattern.time - (30 * 60 * 1000), // Show band around the time
-                    to: pattern.time + (30 * 60 * 1000),
-                    color: pattern.type.includes('Bullish') ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                    label: {
-                        text: pattern.type,
-                        style: {
-                            color: '#606060'
-                        }
-                    }
-                }))
+        function displayPatterns(patterns) {
+            const patternsElement = document.getElementById('patterns');
+            if (patterns.length === 0) {
+                patternsElement.innerHTML = "<p>No patterns detected.</p>";
+            } else {
+                patternsElement.innerHTML = patterns.map(pattern => {
+                    return `<p>${pattern.type} pattern detected at time: ${new Date(pattern.time).toLocaleString()}</p>`;
+                }).join('');
             }
-        });
+        }
+
+        async function predictAndShowChart() {
+            const currencyPair = document.getElementById("currency-pair").value;
+            const timeFrame = document.getElementById("time-frame").value;
+
+            // Mapping assets (currencies, crypto, commodities) to TradingView symbols
+            const symbolMap = {
+                "USD/EUR": "FX:EURUSD",
+                "USD/INR": "FX_IDC:USDINR",
+                "USD/PKR": "OANDA:USD_PKR",
+                "GBP/USD": "FX:GBPUSD",
+                "BTC/USD": "BITSTAMP:BTCUSD",  // Bitcoin symbol
+                "XAU/USD": "OANDA:XAUUSD"      // Gold symbol
+            };
+
+            const tradingViewSymbol = symbolMap[currencyPair] || "FX:EURUSD"; // Default to EUR/USD if no match
+            let interval = "1"; // Default to 1 minute
+
+            // Map the selected timeframe to TradingView's interval format
+            switch (timeFrame) {
+                case "1m": interval = "1"; break;
+                case "5m": interval = "5"; break;
+                case "15m": interval = "15"; break;
+                case "1h": interval = "60"; break;
+                case "4h": interval = "240"; break;
+                case "1d": interval = "D"; break;
+                default: interval = "1"; // Fallback to 1 minute
+            }
+
+            // Load the TradingView widget to display live chart
+            new TradingView.widget({
+                "width": "100%",
+                "height": 500,
+                "symbol": tradingViewSymbol,
+                "interval": interval,
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "container_id": "tradingview_chart"
+            });
+
+            // Simulate data for candlestick pattern detection
+            const simulatedCandlestickData = [
+                { time: Date.now(), open: 1.158, high: 1.159, low: 1.156, close: 1.157 },
+                { time: Date.now() + 60000, open: 1.157, high: 1.160, low: 1.155, close: 1.159 },
+                { time: Date.now() + 120000, open: 1.159, high: 1.162, low: 1.158, close: 1.160 },
+                { time: Date.now() + 180000, open: 1.160, high: 1.165, low: 1.158, close: 1.164 },
+                { time: Date.now() + 240000, open: 1.164, high: 1.166, low: 1.160, close: 1.161 },
+                { time: Date.now() + 300000, open: 1.161, high: 1.163, low: 1.159, close: 1.160 }, // Bearish Engulfing
+                { time: Date.now() + 360000, open: 1.160, high: 1.164, low: 1.158, close: 1.163 }, // Bullish Engulfing
+            ];
+
+            // Detect candlestick patterns
+            const patterns = detectPatterns(simulatedCandlestickData);
+
+            // Display detected patterns
+            displayPatterns(patterns);
+        }
     </script>
 </body>
 </html>
