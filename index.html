@@ -8,92 +8,82 @@
     <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
 </head>
 <body>
-    <div id="container" style="height: 400px; min-width: 310px"></div>
+    <div id="container" style="height: 500px; min-width: 310px"></div>
 
     <script>
-        async function fetchForexData(symbol) {
-            const apiKey = 'YOUR_ALPHA_VANTAGE_API_KEY';
-            const url = `https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=${symbol}&to_symbol=USD&interval=1min&apikey=${apiKey}`;
-            const response = await fetch(url);
-            const data = await response.json();
+        // Sample static data for testing (you can replace this with live data)
+        const forexData = [
+            [1634236800000, 1.158, 1.159, 1.156, 1.157], // [timestamp, open, high, low, close]
+            [1634238600000, 1.157, 1.160, 1.155, 1.159],
+            [1634240400000, 1.159, 1.162, 1.158, 1.160],
+            [1634242200000, 1.160, 1.165, 1.158, 1.164],
+            [1634244000000, 1.164, 1.166, 1.160, 1.161],
+            [1634245800000, 1.161, 1.163, 1.159, 1.160], // Example Bearish Engulfing
+            [1634247600000, 1.160, 1.164, 1.158, 1.163], // Example Bullish Engulfing
+            [1634249400000, 1.163, 1.166, 1.161, 1.162],
+            [1634251200000, 1.162, 1.165, 1.160, 1.164],
+            [1634253000000, 1.164, 1.168, 1.162, 1.167]
+        ];
 
-            const timeSeries = data['Time Series FX (1min)'];
-            const forexData = Object.keys(timeSeries).map(time => {
-                const point = timeSeries[time];
-                return [
-                    new Date(time).getTime(), // Timestamp
-                    parseFloat(point['1. open']), // Open
-                    parseFloat(point['2. high']), // High
-                    parseFloat(point['3. low']), // Low
-                    parseFloat(point['4. close']) // Close
-                ];
-            });
-            return forexData.reverse(); // Reverse to chronological order
-        }
-
+        // Function to detect basic candlestick patterns
         function detectPatterns(data) {
             const patterns = [];
 
             for (let i = 1; i < data.length; i++) {
-                const [prevTimestamp, prevOpen, prevHigh, prevLow, prevClose] = data[i - 1];
-                const [timestamp, open, high, low, close] = data[i];
+                const [prevTime, prevOpen, prevHigh, prevLow, prevClose] = data[i - 1];
+                const [time, open, high, low, close] = data[i];
 
                 // Bullish Engulfing Pattern
                 if (prevOpen > prevClose && open < close && open < prevClose && close > prevOpen) {
-                    patterns.push({ time: timestamp, type: 'Bullish Engulfing', signal: 'Bullish reversal' });
+                    patterns.push({ time, type: 'Bullish Engulfing', signal: 'Bullish reversal' });
                 }
 
                 // Bearish Engulfing Pattern
                 if (prevOpen < prevClose && open > close && open > prevClose && close < prevOpen) {
-                    patterns.push({ time: timestamp, type: 'Bearish Engulfing', signal: 'Bearish reversal' });
+                    patterns.push({ time, type: 'Bearish Engulfing', signal: 'Bearish reversal' });
                 }
-
-                // Add more patterns here based on the rules...
-
             }
+
             return patterns;
         }
 
-        async function createChart(symbol) {
-            const forexData = await fetchForexData(symbol);
-            const patterns = detectPatterns(forexData);
+        // Detect patterns
+        const patterns = detectPatterns(forexData);
 
-            Highcharts.stockChart('container', {
-                rangeSelector: {
-                    selected: 1
-                },
+        // Create the chart with detected patterns
+        Highcharts.stockChart('container', {
+            rangeSelector: {
+                selected: 1
+            },
 
-                title: {
-                    text: symbol + ' Forex Live Chart'
-                },
+            title: {
+                text: 'Forex Live Chart with Candlestick Pattern Detection'
+            },
 
-                series: [{
-                    type: 'candlestick',
-                    name: symbol + ' to USD',
-                    data: forexData,
-                    tooltip: {
-                        valueDecimals: 4
-                    }
-                }],
-
-                // Highlight detected patterns with plot bands or markers
-                xAxis: {
-                    plotBands: patterns.map(pattern => ({
-                        from: pattern.time - (60 * 1000), // Assume 1-minute candles, adjust as needed
-                        to: pattern.time,
-                        color: pattern.type.includes('Bullish') ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-                        label: {
-                            text: pattern.type,
-                            style: {
-                                color: '#606060'
-                            }
-                        }
-                    }))
+            series: [{
+                type: 'candlestick',
+                name: 'EUR/USD',
+                data: forexData,
+                tooltip: {
+                    valueDecimals: 4
                 }
-            });
-        }
+            }],
 
-        createChart('EUR'); // Default to EUR/USD
+            // Highlight detected patterns with plot bands
+            xAxis: {
+                plotBands: patterns.map(pattern => ({
+                    from: pattern.time - (30 * 60 * 1000), // Show band around the time
+                    to: pattern.time + (30 * 60 * 1000),
+                    color: pattern.type.includes('Bullish') ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                    label: {
+                        text: pattern.type,
+                        style: {
+                            color: '#606060'
+                        }
+                    }
+                }))
+            }
+        });
     </script>
 </body>
 </html>
