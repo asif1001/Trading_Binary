@@ -3,146 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Binary Trading Prediction</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        h1 {
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            font-weight: bold;
-        }
-        select, input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            text-align: center;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-        }
-        #tradingview-widget-container {
-            margin-top: 20px;
-            width: 100%;
-            height: 500px;
-        }
-    </style>
+    <title>Binary Trading Chart</title>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Binary Trading Prediction Tool</h1>
-        
-        <!-- Currency Pair Selection -->
-        <div class="form-group">
-            <label for="currency-pair">Select Asset</label>
-            <select id="currency-pair">
-                <option value="USD/EUR">USD/EUR</option>
-                <option value="USD/INR">USD/INR</option>
-                <option value="USD/PKR">USD/PKR</option>
-                <option value="GBP/USD">GBP/USD</option>
-                <option value="BTC/USD">BTC/USD</option> <!-- Bitcoin -->
-                <option value="XAU/USD">XAU/USD (Gold)</option> <!-- Gold -->
-            </select>
-        </div>
+    <div id="container" style="height: 400px; min-width: 310px"></div>
 
-        <!-- Time Frame Selection -->
-        <div class="form-group">
-            <label for="time-frame">Select Time Frame</label>
-            <select id="time-frame">
-                <option value="1m">1 Minute</option>
-                <option value="5m">5 Minutes</option>
-                <option value="15m">15 Minutes</option>
-                <option value="1h">1 Hour</option>
-                <option value="4h">4 Hours</option>
-                <option value="1d">1 Day</option>
-            </select>
-        </div>
-
-        <!-- Predict Button -->
-        <div class="form-group">
-            <button class="btn" onclick="predictAndShowChart()">Predict & Show Chart</button>
-        </div>
-
-        <!-- Placeholder for Prediction -->
-        <div id="prediction-result" style="text-align:center; font-size: 1.5rem;"></div>
-
-        <!-- TradingView Live Chart -->
-        <div id="tradingview-widget-container">
-            <div id="tradingview_chart"></div>
-        </div>
-    </div>
-
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        function predictAndShowChart() {
-            const currencyPair = document.getElementById("currency-pair").value;
-            const timeFrame = document.getElementById("time-frame").value;
+        async function fetchForexData(symbol) {
+            const apiKey = 'YOUR_ALPHA_VANTAGE_API_KEY';
+            const url = `https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=${symbol}&to_symbol=USD&interval=1min&apikey=${apiKey}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            const timeSeries = data['Time Series FX (1min)'];
+            const forexData = Object.keys(timeSeries).map(time => {
+                const point = timeSeries[time];
+                return [
+                    new Date(time).getTime(), // Timestamp
+                    parseFloat(point['1. open']), // Open
+                    parseFloat(point['2. high']), // High
+                    parseFloat(point['3. low']), // Low
+                    parseFloat(point['4. close']) // Close
+                ];
+            });
+            return forexData.reverse(); // Reverse to chronological order
+        }
 
-            // Placeholder prediction logic, just random move
-            const prediction = Math.random() > 0.5 ? 'Green (Up)' : 'Red (Down)';
-            const resultElement = document.getElementById("prediction-result");
-            resultElement.textContent = `Predicted Movement for ${currencyPair} on ${timeFrame} time frame: ${prediction}`;
+        async function createChart(symbol) {
+            const forexData = await fetchForexData(symbol);
 
-            // Mapping assets (currencies, crypto, commodities) to TradingView symbols
-            const symbolMap = {
-                "USD/EUR": "FX:EURUSD",
-                "USD/INR": "FX_IDC:USDINR",
-                "USD/PKR": "OANDA:USD_PKR",
-                "GBP/USD": "FX:GBPUSD",
-                "BTC/USD": "BITSTAMP:BTCUSD",  // Bitcoin symbol
-                "XAU/USD": "OANDA:XAUUSD"      // Gold symbol
-            };
+            Highcharts.stockChart('container', {
+                rangeSelector: {
+                    selected: 1
+                },
 
-            const tradingViewSymbol = symbolMap[currencyPair] || "FX:EURUSD"; // Default to EUR/USD if no match
+                title: {
+                    text: symbol + ' Forex Live Chart'
+                },
 
-            // Map the selected timeframe to TradingView's interval format
-            let interval = "1"; // Default to 1 minute
-            switch (timeFrame) {
-                case "1m": interval = "1"; break;
-                case "5m": interval = "5"; break;
-                case "15m": interval = "15"; break;
-                case "1h": interval = "60"; break;
-                case "4h": interval = "240"; break;
-                case "1d": interval = "D"; break;
-                default: interval = "1"; // Fallback to 1 minute
-            }
-
-            // Load the TradingView widget to display live chart
-            new TradingView.widget({
-                "width": "100%",
-                "height": 500,
-                "symbol": tradingViewSymbol,
-                "interval": interval,
-                "timezone": "Etc/UTC",
-                "theme": "light",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "#f1f3f6",
-                "enable_publishing": false,
-                "allow_symbol_change": true,
-                "container_id": "tradingview_chart"
+                series: [{
+                    type: 'candlestick',
+                    name: symbol + ' to USD',
+                    data: forexData,
+                    tooltip: {
+                        valueDecimals: 4
+                    }
+                }]
             });
         }
+
+        createChart('EUR'); // Default to EUR/USD
     </script>
 </body>
 </html>
