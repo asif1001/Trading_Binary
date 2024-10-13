@@ -63,10 +63,6 @@
         th {
             background-color: #f2f2f2;
         }
-        #tradingview_widget {
-            height: 400px;
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
@@ -77,9 +73,9 @@
         <!-- Asset Selection -->
         <div class="form-group">
             <label for="asset-pair">Select Asset</label>
-            <select id="asset-pair" onchange="loadTradingViewChart()">
-                <option value="XAUUSD">Gold (XAU/USD)</option>
-                <option value="BTCUSD">Bitcoin (BTC/USD)</option>
+            <select id="asset-pair">
+                <option value="XAU/USD">Gold (XAU/USD)</option>
+                <option value="BTC/USD">Bitcoin (BTC/USD)</option>
             </select>
         </div>
 
@@ -94,13 +90,14 @@
             </select>
         </div>
 
-        <!-- TradingView Widget for Live Chart -->
-        <div id="tradingview_widget"></div>
-
         <!-- Predict Button -->
         <div class="form-group">
             <button class="btn" onclick="predictAndShowPrice()">Predict & Show TP/SL</button>
         </div>
+
+        <!-- Live Market Price -->
+        <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
+        <div id="loading-indicator" class="loading"></div>
 
         <!-- Prediction Result with TP and SL -->
         <div id="patterns" class="prediction-result"></div>
@@ -141,51 +138,33 @@
         </table>
     </div>
 
-    <!-- TradingView Widget Script -->
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-
     <!-- Custom Script -->
     <script>
-        // Function to load TradingView widget based on selected asset
-        function loadTradingViewChart() {
-            const asset = document.getElementById("asset-pair").value;
+        const apiKey = '6ecda4d1ff2c4f0b91b7ddf7d7140721'; // Your Twelve Data API key
+        const twelveDataUrl = 'https://api.twelvedata.com/price';
 
-            // Remove existing widget (if any)
-            const widgetContainer = document.getElementById("tradingview_widget");
-            widgetContainer.innerHTML = '';
-
-            // Create TradingView widget
-            new TradingView.widget({
-                "width": "100%",
-                "height": 400,
-                "symbol": asset,
-                "interval": "15",
-                "timezone": "Etc/UTC",
-                "theme": "light",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "#f1f3f6",
-                "enable_publishing": false,
-                "withdateranges": true,
-                "hide_side_toolbar": false,
-                "allow_symbol_change": true,
-                "details": true,
-                "container_id": "tradingview_widget"
-            });
+        // Function to fetch live price from Twelve Data
+        async function fetchRealTimePrice(symbol) {
+            try {
+                document.getElementById('loading-indicator').innerHTML = "Fetching live price...";
+                const response = await fetch(`${twelveDataUrl}?symbol=${symbol}&apikey=${apiKey}`);
+                const data = await response.json();
+                document.getElementById('loading-indicator').innerHTML = ""; // Clear loading indicator
+                return parseFloat(data.price).toFixed(2); // Return price with 2 decimal places
+            } catch (error) {
+                console.error('Error fetching price:', error);
+                document.getElementById('loading-indicator').innerHTML = "Error fetching price.";
+                return 'Error';
+            }
         }
 
-        // Load default chart on page load
-        window.onload = function() {
-            loadTradingViewChart();
-        };
-
-        // Function to calculate TP and SL (dummy logic for now)
+        // Function to calculate TP and SL
         function calculateTPandSL(currentPrice, asset) {
             let tp, sl;
-            if (asset === 'XAUUSD') { // For Gold
+            if (asset === 'XAU/USD') { // For Gold
                 tp = currentPrice + 10; // Example: Add $10 for TP
                 sl = currentPrice - 10; // Example: Subtract $10 for SL
-            } else if (asset === 'BTCUSD') { // For Bitcoin
+            } else if (asset === 'BTC/USD') { // For Bitcoin
                 tp = currentPrice + 100; // Example: Add $100 for TP
                 sl = currentPrice - 100; // Example: Subtract $100 for SL
             }
@@ -195,17 +174,20 @@
         // Function to detect candlestick patterns (dummy logic for now)
         function detectCandlestickPatterns(asset) {
             const patterns = {
-                "XAUUSD": { pattern: "Bullish Engulfing", timeFrame: "1h", action: "Buy" },
-                "BTCUSD": { pattern: "Doji", timeFrame: "4h", action: "Wait" }
+                "XAU/USD": { pattern: "Bullish Engulfing", timeFrame: "1h", action: "Buy" },
+                "BTC/USD": { pattern: "Doji", timeFrame: "4h", action: "Wait" }
             };
             return patterns[asset] || null;
         }
 
-        // Main function to predict and show TP/SL
-        function predictAndShowPrice() {
+        // Main function to fetch price, predict and show TP/SL
+        async function predictAndShowPrice() {
             const assetPair = document.getElementById("asset-pair").value;
             const timeFrame = document.getElementById("time-frame").value;
-            const currentPrice = 1000;  // Mock current price, update with real price if available
+
+            // Fetch and show the live price
+            const currentPrice = await fetchRealTimePrice(assetPair);
+            document.getElementById('price-value').innerHTML = currentPrice;
 
             // Calculate TP and SL
             const { tp, sl } = calculateTPandSL(currentPrice, assetPair);
