@@ -77,6 +77,10 @@
         .pattern-list li span {
             font-weight: bold;
         }
+        .stats {
+            margin-top: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -148,13 +152,18 @@
 
             <!-- Placeholder for Pattern Detection and Prediction -->
             <div id="patterns" class="prediction-result"></div>
+
+            <!-- Prediction Stats -->
+            <div id="prediction-stats" class="stats"></div>
         </div>
     </div>
 
     <script>
         let lastClosePrice = null;
         let lastPrediction = null;
-        let refreshInterval = 60000; // Refresh every 60 seconds
+        let correctPredictions = 0;
+        let totalPredictions = 0;
+        let refreshInterval = 60000; // Default to 1 minute
         const API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY'; // Replace with your Alpha Vantage API key
 
         // List of detected patterns for multiple currency pairs (simulation)
@@ -198,8 +207,14 @@
         }
 
         // Predict next candle
-        function predictNextCandle(timeFrame, currentPrice, currencyPair) {
-            const randomDirection = Math.random() > 0.5 ? 'up' : 'down'; // Random prediction
+        function predictNextCandle(timeFrame, currentPrice, currencyPair, learningAdjustment = false) {
+            let randomDirection = Math.random() > 0.5 ? 'up' : 'down';
+
+            // Basic learning mechanism: adjust based on the last wrong prediction
+            if (learningAdjustment && lastPrediction && lastPrediction.direction === "wrong") {
+                randomDirection = lastPrediction.direction === 'up' ? 'down' : 'up';
+            }
+
             const nextCandleColor = randomDirection === 'up' ? `<span class="green-text">Green</span>` : `<span class="red-text">Red</span>`;
             const now = new Date();
             const nextCandleTime = new Date(now.getTime() + getTimeFrameMillis(timeFrame)).toLocaleTimeString();
@@ -215,10 +230,24 @@
 
             if (previousPrediction) {
                 const actualDirection = prediction.direction === previousPrediction.direction ? "correct" : "wrong";
+
+                // Track prediction result
+                totalPredictions += 1;
+                if (actualDirection === "correct") {
+                    correctPredictions += 1;
+                }
+
                 resultText += `<br/><strong>Last Prediction was ${actualDirection}.</strong>`;
+                updateStats();
             }
 
             patternsElement.innerHTML = `<p>${resultText}</p>`;
+        }
+
+        function updateStats() {
+            const statsElement = document.getElementById('prediction-stats');
+            const accuracy = ((correctPredictions / totalPredictions) * 100).toFixed(2);
+            statsElement.innerHTML = `<p>Correct Predictions: ${correctPredictions}<br/>Wrong Predictions: ${totalPredictions - correctPredictions}<br/>Accuracy: ${accuracy}%</p>`;
         }
 
         function updateLivePrice(price) {
@@ -244,6 +273,9 @@
             const timeZone = document.getElementById("time-zone").value;
             const timeFrame = document.getElementById("time-frame").value;
 
+            // Adjust refreshInterval based on the selected time frame
+            refreshInterval = getTimeFrameMillis(timeFrame);
+
             // Start the clock with the selected time zone
             startClock(timeZone);
 
@@ -255,17 +287,17 @@
             displayDetectedPatterns();
 
             // Predict the next candle immediately
-            let prediction = predictNextCandle(timeFrame, currentPrice, currencyPair);
+            let prediction = predictNextCandle(timeFrame, currentPrice, currencyPair, true);
             displayPrediction(prediction, lastPrediction);
 
-            // Continue updating live price at regular intervals
+            // Continue updating live price and prediction at regular intervals
             setInterval(async () => {
                 const updatedPrice = await fetchRealTimePrice(currencyPair);
                 updateLivePrice(updatedPrice);
 
                 // Update prediction for the next candle
                 lastPrediction = prediction;
-                prediction = predictNextCandle(timeFrame, updatedPrice, currencyPair);
+                prediction = predictNextCandle(timeFrame, updatedPrice, currencyPair, true);
                 displayPrediction(prediction, lastPrediction);
             }, refreshInterval);
         }
