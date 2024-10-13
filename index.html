@@ -139,6 +139,9 @@
                 <label for="time-frame">Select Time Frame</label>
                 <select id="time-frame">
                     <option value="1m">1 Minute</option>
+                    <option value="5m">5 Minutes</option>
+                    <option value="15m">15 Minutes</option>
+                    <option value="1h">1 Hour</option>
                 </select>
             </div>
 
@@ -173,9 +176,11 @@
             <table id="prediction-history-table">
                 <thead>
                     <tr>
-                        <th>Time</th>
                         <th>Pair</th>
-                        <th>Direction</th>
+                        <th>Opening Time</th>
+                        <th>Prediction Price</th>
+                        <th>Closing Time</th>
+                        <th>Closing Price</th>
                         <th>Result</th>
                     </tr>
                 </thead>
@@ -198,18 +203,18 @@
 
         // List of detected patterns for multiple currency pairs (simulation)
         const detectedPatterns = {
-            "EUR/USD": "Bullish Engulfing",
-            "INR/USD": "Bearish Engulfing",
-            "BTC/USD": "Doji",
-            "GBP/USD": "Hammer",
+            "EUR/USD": { pattern: "Bullish Engulfing", time: "10:30" },
+            "INR/USD": { pattern: "Bearish Engulfing", time: "10:35" },
+            "BTC/USD": { pattern: "Doji", time: "10:40" },
+            "GBP/USD": { pattern: "Hammer", time: "10:45" },
         };
 
         // Show detected patterns on the left sidebar
         function displayDetectedPatterns() {
             const patternTableBody = document.getElementById('pattern-list');
             patternTableBody.innerHTML = '';
-            for (const [pair, pattern] of Object.entries(detectedPatterns)) {
-                const time = new Date().toLocaleTimeString();
+            for (const [pair, data] of Object.entries(detectedPatterns)) {
+                const { pattern, time } = data;
                 const action = pattern.includes("Bullish") ? "Buy" : "Sell";
                 const row = `<tr>
                     <td>${pair}</td>
@@ -263,7 +268,9 @@
                 message: `The Next Candle will be ${nextCandleColor} for ${currencyPair} from Current Price <strong>${currentPrice}</strong> closing at ${nextCandleTime}`,
                 direction: randomDirection,
                 pair: currencyPair,
-                predictedPrice: currentPrice
+                predictedPrice: currentPrice,
+                openingTime: now.toLocaleTimeString(),
+                closingTime: nextCandleTime
             };
         }
 
@@ -275,12 +282,13 @@
                             ? 'Correct' : 'Wrong';
 
             // Display prediction and update prediction history table
-            const now = new Date().toLocaleTimeString();
             const predictionTableBody = document.getElementById('prediction-table');
             const row = `<tr>
-                <td>${now}</td>
                 <td>${prediction.pair}</td>
-                <td>${prediction.direction === 'up' ? 'Up' : 'Down'}</td>
+                <td>${prediction.openingTime}</td>
+                <td>${prediction.predictedPrice}</td>
+                <td>${prediction.closingTime}</td>
+                <td>${currentPrice}</td>
                 <td>${result}</td>
             </tr>`;
             predictionTableBody.innerHTML = row + predictionTableBody.innerHTML; // Insert latest prediction at the top
@@ -295,6 +303,9 @@
         function getTimeFrameMillis(timeFrame) {
             switch (timeFrame) {
                 case '1m': return 60000; // 1 minute in milliseconds
+                case '5m': return 300000; // 5 minutes in milliseconds
+                case '15m': return 900000; // 15 minutes in milliseconds
+                case '1h': return 3600000; // 1 hour in milliseconds
                 default: return 60000; // Default to 1 minute
             }
         }
