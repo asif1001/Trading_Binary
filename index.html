@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Binary Trading Prediction with Real-Time Market Price</title>
+    <title>1-Minute Candle Prediction System</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -115,7 +115,7 @@
 
         <!-- Main content area -->
         <div class="content">
-            <h1>Binary Trading Prediction</h1>
+            <h1>1-Minute Candle Prediction</h1>
 
             <!-- Currency Pair Selection -->
             <div class="form-group">
@@ -139,11 +139,6 @@
                 <label for="time-frame">Select Time Frame</label>
                 <select id="time-frame">
                     <option value="1m">1 Minute</option>
-                    <option value="5m">5 Minutes</option>
-                    <option value="15m">15 Minutes</option>
-                    <option value="1h">1 Hour</option>
-                    <option value="4h">4 Hours</option>
-                    <option value="1d">1 Day</option>
                 </select>
             </div>
 
@@ -300,11 +295,6 @@
         function getTimeFrameMillis(timeFrame) {
             switch (timeFrame) {
                 case '1m': return 60000; // 1 minute in milliseconds
-                case '5m': return 300000; // 5 minutes in milliseconds
-                case '15m': return 900000; // 15 minutes in milliseconds
-                case '1h': return 3600000; // 1 hour in milliseconds
-                case '4h': return 14400000; // 4 hours in milliseconds
-                case '1d': return 86400000; // 1 day in milliseconds
                 default: return 60000; // Default to 1 minute
             }
         }
