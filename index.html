@@ -121,9 +121,10 @@
             <div class="form-group">
                 <label for="currency-pair">Select Asset</label>
                 <select id="currency-pair">
-                    <option value="bitcoin">BTC/USD</option>
-                    <option value="ethereum">ETH/USD</option>
-                    <option value="litecoin">LTC/USD</option>
+                    <option value="EURUSD=X">EUR/USD</option>
+                    <option value="GBPUSD=X">GBP/USD</option>
+                    <option value="USDJPY=X">USD/JPY</option>
+                    <option value="USDCAD=X">USD/CAD</option>
                 </select>
             </div>
 
@@ -189,14 +190,14 @@
         let refreshInterval = 60000; // Default to 1 minute
         let priceCache = {}; // Store previous prices for faster loading
 
-        // Use CoinGecko API for fetching cryptocurrency prices
-        const COINGECKO_API = 'https://api.coingecko.com/api/v3/simple/price';
+        // Yahoo Finance API endpoint for forex pairs
+        const YAHOO_FINANCE_API = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=';
 
         // List of detected patterns for multiple currency pairs (simulation)
         const detectedPatterns = {
-            "BTC/USD": { pattern: "Bullish Engulfing", time: "10:30" },
-            "ETH/USD": { pattern: "Bearish Engulfing", time: "10:35" },
-            "LTC/USD": { pattern: "Doji", time: "10:40" },
+            "EUR/USD": { pattern: "Bullish Engulfing", time: "10:30" },
+            "GBP/USD": { pattern: "Bearish Engulfing", time: "10:35" },
+            "USD/JPY": { pattern: "Doji", time: "10:40" },
         };
 
         // Show detected patterns on the left sidebar
@@ -226,14 +227,13 @@
             }, 1000); // Update every second
         }
 
-        // Fetch real-time cryptocurrency price from CoinGecko
+        // Fetch real-time forex price from Yahoo Finance
         async function fetchRealTimePrice(symbol) {
-            const currency = "usd";
             try {
                 document.getElementById('loading-indicator').innerHTML = "Fetching live price...";
-                const response = await fetch(`${COINGECKO_API}?ids=${symbol}&vs_currencies=${currency}`);
+                const response = await fetch(`${YAHOO_FINANCE_API}${symbol}`);
                 const data = await response.json();
-                const price = parseFloat(data[symbol][currency]).toFixed(4);
+                const price = parseFloat(data.quoteResponse.result[0].regularMarketPrice).toFixed(4);
                 document.getElementById('loading-indicator').innerHTML = ""; // Clear loading indicator
                 return price;
             } catch (error) {
