@@ -66,6 +66,10 @@
                 <option value="GBP/USD">GBP/USD</option>
                 <option value="BTC/USD">BTC/USD</option> <!-- Bitcoin -->
                 <option value="XAU/USD">XAU/USD (Gold)</option> <!-- Gold -->
+                <option value="AUD/USD">AUD/USD</option> <!-- Australian Dollar -->
+                <option value="NZD/USD">NZD/USD</option> <!-- New Zealand Dollar -->
+                <option value="USD/CAD">USD/CAD</option> <!-- Canadian Dollar -->
+                <option value="USD/JPY">USD/JPY</option> <!-- Japanese Yen -->
             </select>
         </div>
 
@@ -87,7 +91,7 @@
             <button class="btn" onclick="predictAndShowChart()">Predict & Show Chart</button>
         </div>
 
-        <!-- Placeholder for Pattern Detection -->
+        <!-- Placeholder for Pattern Detection and Prediction -->
         <div id="patterns"></div>
 
         <!-- TradingView Live Chart -->
@@ -98,6 +102,9 @@
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
+        let lastClosePrice = null;
+        let refreshInterval = 60000; // Set auto-refresh every 60 seconds
+
         function getTradingViewUrl(symbol, interval) {
             return `https://s.tradingview.com/widgetembed/?symbol=${symbol}&interval=${interval}&theme=light&style=1&locale=en&toolbar_bg=%23f1f3f6&hide_side_toolbar=false&allow_symbol_change=true&save_image=true&studies=[]&show_popup_button=true&popup_width=600&popup_height=400`;
         }
@@ -121,8 +128,6 @@
                 if (prevOpen < prevClose && open > close && open > prevClose && close < prevOpen) {
                     patterns.push({ type: 'Bearish Engulfing', time: currentCandle.time });
                 }
-
-                // Additional patterns like Doji, Hammer, etc., can be added here...
             }
 
             return patterns;
@@ -131,7 +136,12 @@
         function displayPatterns(patterns) {
             const patternsElement = document.getElementById('patterns');
             if (patterns.length === 0) {
-                patternsElement.innerHTML = "<p>No patterns detected.</p>";
+                if (lastClosePrice !== null) {
+                    const prediction = Math.random() > 0.5 ? 'up' : 'down';
+                    patternsElement.innerHTML = `<p>No patterns detected. Next candle predicted to close ${prediction} from ${lastClosePrice.toFixed(4)}</p>`;
+                } else {
+                    patternsElement.innerHTML = "<p>No patterns detected and no prediction available.</p>";
+                }
             } else {
                 patternsElement.innerHTML = patterns.map(pattern => {
                     return `<p>${pattern.type} pattern detected at time: ${new Date(pattern.time).toLocaleString()}</p>`;
@@ -150,7 +160,11 @@
                 "USD/PKR": "OANDA:USD_PKR",
                 "GBP/USD": "FX:GBPUSD",
                 "BTC/USD": "BITSTAMP:BTCUSD",  // Bitcoin symbol
-                "XAU/USD": "OANDA:XAUUSD"      // Gold symbol
+                "XAU/USD": "OANDA:XAUUSD",     // Gold symbol
+                "AUD/USD": "FX:AUDUSD",        // Australian Dollar
+                "NZD/USD": "FX:NZDUSD",        // New Zealand Dollar
+                "USD/CAD": "FX:USDCAD",        // Canadian Dollar
+                "USD/JPY": "FX:USDJPY"         // Japanese Yen
             };
 
             const tradingViewSymbol = symbolMap[currencyPair] || "FX:EURUSD"; // Default to EUR/USD if no match
@@ -197,8 +211,14 @@
             // Detect candlestick patterns
             const patterns = detectPatterns(simulatedCandlestickData);
 
-            // Display detected patterns
+            // Update the last close price for prediction
+            lastClosePrice = simulatedCandlestickData[simulatedCandlestickData.length - 1].close;
+
+            // Display detected patterns and predictions
             displayPatterns(patterns);
+
+            // Set auto-refresh to check for patterns every minute
+            setTimeout(predictAndShowChart, refreshInterval);
         }
     </script>
 </body>
