@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Prediction System for Gold & BTC</title>
+    <title>Prediction System for Gold & BTC with TP/SL and Patterns</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -92,7 +92,7 @@
 
     <div class="container">
         <div class="content">
-            <h1>Gold & Bitcoin Candle Prediction</h1>
+            <h1>Gold & Bitcoin Prediction with TP/SL</h1>
 
             <!-- MetaApi Connection Status -->
             <div id="connection-status" class="status disconnected">Not connected to MetaApi</div>
@@ -126,8 +126,24 @@
             <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
             <div id="loading-indicator" class="loading"></div>
 
-            <!-- Prediction Result -->
+            <!-- Prediction Result with TP and SL -->
             <div id="patterns" class="prediction-result"></div>
+
+            <!-- Candlestick Patterns -->
+            <h3>Detected Candlestick Patterns</h3>
+            <table id="candlestick-patterns-table">
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Pattern</th>
+                        <th>Time Frame</th>
+                        <th>Suggested Action</th>
+                    </tr>
+                </thead>
+                <tbody id="pattern-list">
+                    <!-- Detected patterns will be shown here -->
+                </tbody>
+            </table>
 
             <!-- Prediction Table -->
             <h3>Prediction History</h3>
@@ -138,6 +154,9 @@
                         <th>Time Frame</th>
                         <th>Prediction</th>
                         <th>Live Price</th>
+                        <th>Entry Price</th>
+                        <th>TP</th>
+                        <th>SL</th>
                         <th>Result</th>
                     </tr>
                 </thead>
@@ -194,18 +213,29 @@
             }
         }
 
-        // Function to get time frame in milliseconds
-        function getTimeFrameMillis(timeFrame) {
-            switch (timeFrame) {
-                case '15m': return 900000; // 15 minutes
-                case '30m': return 1800000; // 30 minutes
-                case '1h': return 3600000; // 1 hour
-                case '4h': return 14400000; // 4 hours
-                default: return 900000; // Default to 15 minutes
+        // Function to calculate TP and SL
+        function calculateTPandSL(currentPrice, asset) {
+            let tp, sl;
+            if (asset === 'XAUUSD') { // For Gold
+                tp = currentPrice + 10; // Example: Add $10 for TP
+                sl = currentPrice - 10; // Example: Subtract $10 for SL
+            } else if (asset === 'BTCUSD') { // For Bitcoin
+                tp = currentPrice + 100; // Example: Add $100 for TP
+                sl = currentPrice - 100; // Example: Subtract $100 for SL
             }
+            return { tp, sl };
         }
 
-        // Main function to fetch price and make prediction
+        // Function to detect candlestick patterns (mock data for demo)
+        function detectCandlestickPatterns(asset) {
+            const patterns = {
+                "XAUUSD": { pattern: "Bullish Engulfing", timeFrame: "1h", action: "Buy" },
+                "BTCUSD": { pattern: "Doji", timeFrame: "4h", action: "Wait" }
+            };
+            return patterns[asset] || null;
+        }
+
+        // Main function to fetch price, predict and show TP/SL
         async function predictAndShowPrice() {
             const assetPair = document.getElementById("asset-pair").value;
             const timeFrame = document.getElementById("time-frame").value;
@@ -214,10 +244,26 @@
             const currentPrice = await fetchRealTimePrice(assetPair);
             document.getElementById('price-value').innerHTML = currentPrice;
 
+            // Calculate TP and SL
+            const { tp, sl } = calculateTPandSL(currentPrice, assetPair);
+
             // Create a simple prediction message
             const prediction = Math.random() > 0.5 ? 'Up' : 'Down';
-            const nextCandle = `The next candle will go ${prediction} for ${assetPair} on ${timeFrame} timeframe.`;
+            const nextCandle = `Prediction: The next candle will go ${prediction}. <br> TP: ${tp}, SL: ${sl}`;
             document.getElementById('patterns').innerHTML = nextCandle;
+
+            // Detect candlestick pattern (mock detection for demo purposes)
+            const detectedPattern = detectCandlestickPatterns(assetPair);
+            const patternTableBody = document.getElementById('pattern-list');
+            if (detectedPattern) {
+                const row = `<tr>
+                    <td>${assetPair}</td>
+                    <td>${detectedPattern.pattern}</td>
+                    <td>${detectedPattern.timeFrame}</td>
+                    <td>${detectedPattern.action}</td>
+                </tr>`;
+                patternTableBody.innerHTML = row; // Replace with latest detected pattern
+            }
 
             // Update prediction history table
             const predictionTableBody = document.getElementById('prediction-table');
@@ -226,6 +272,9 @@
                 <td>${timeFrame}</td>
                 <td>${prediction}</td>
                 <td>${currentPrice}</td>
+                <td>${currentPrice}</td>
+                <td>${tp}</td>
+                <td>${sl}</td>
                 <td>Pending</td>
             </tr>`;
             predictionTableBody.innerHTML = row + predictionTableBody.innerHTML; // Insert latest prediction at the top
