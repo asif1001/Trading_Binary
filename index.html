@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Binary Trading Chart</title>
+    <title>Candlestick Pattern Recognition</title>
     <script src="https://code.highcharts.com/stock/highstock.js"></script>
     <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
 </head>
@@ -16,7 +16,7 @@
             const url = `https://www.alphavantage.co/query?function=FX_INTRADAY&from_symbol=${symbol}&to_symbol=USD&interval=1min&apikey=${apiKey}`;
             const response = await fetch(url);
             const data = await response.json();
-            
+
             const timeSeries = data['Time Series FX (1min)'];
             const forexData = Object.keys(timeSeries).map(time => {
                 const point = timeSeries[time];
@@ -31,8 +31,32 @@
             return forexData.reverse(); // Reverse to chronological order
         }
 
+        function detectPatterns(data) {
+            const patterns = [];
+
+            for (let i = 1; i < data.length; i++) {
+                const [prevTimestamp, prevOpen, prevHigh, prevLow, prevClose] = data[i - 1];
+                const [timestamp, open, high, low, close] = data[i];
+
+                // Bullish Engulfing Pattern
+                if (prevOpen > prevClose && open < close && open < prevClose && close > prevOpen) {
+                    patterns.push({ time: timestamp, type: 'Bullish Engulfing', signal: 'Bullish reversal' });
+                }
+
+                // Bearish Engulfing Pattern
+                if (prevOpen < prevClose && open > close && open > prevClose && close < prevOpen) {
+                    patterns.push({ time: timestamp, type: 'Bearish Engulfing', signal: 'Bearish reversal' });
+                }
+
+                // Add more patterns here based on the rules...
+
+            }
+            return patterns;
+        }
+
         async function createChart(symbol) {
             const forexData = await fetchForexData(symbol);
+            const patterns = detectPatterns(forexData);
 
             Highcharts.stockChart('container', {
                 rangeSelector: {
@@ -50,7 +74,22 @@
                     tooltip: {
                         valueDecimals: 4
                     }
-                }]
+                }],
+
+                // Highlight detected patterns with plot bands or markers
+                xAxis: {
+                    plotBands: patterns.map(pattern => ({
+                        from: pattern.time - (60 * 1000), // Assume 1-minute candles, adjust as needed
+                        to: pattern.time,
+                        color: pattern.type.includes('Bullish') ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                        label: {
+                            text: pattern.type,
+                            style: {
+                                color: '#606060'
+                            }
+                        }
+                    }))
+                }
             });
         }
 
