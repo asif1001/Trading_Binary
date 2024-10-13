@@ -9,16 +9,29 @@
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
+            display: flex;
+            justify-content: center;
         }
         .container {
-            max-width: 600px;
-            margin: 0 auto;
+            max-width: 700px;
+            margin: 0 20px;
+            display: flex;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .content {
+            flex-grow: 1;
+            margin-left: 20px;
         }
         h1 {
             text-align: center;
         }
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         label {
             display: block;
@@ -32,7 +45,7 @@
         .btn {
             background-color: #007bff;
             color: white;
-            padding: 10px 20px;
+            padding: 10px;
             border: none;
             cursor: pointer;
             width: 100%;
@@ -41,19 +54,9 @@
         .btn:hover {
             background-color: #0056b3;
         }
-        .price-display {
+        .price-display, .clock-display, .prediction-result {
             margin-top: 20px;
             font-size: 1.5rem;
-            text-align: center;
-        }
-        .clock-display {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 1.2rem;
-        }
-        #patterns {
-            margin-top: 20px;
-            font-size: 1.2em;
             text-align: center;
         }
         .green-text {
@@ -64,73 +67,114 @@
             color: red;
             font-weight: bold;
         }
+        .pattern-list {
+            list-style: none;
+            padding: 0;
+        }
+        .pattern-list li {
+            margin-bottom: 10px;
+        }
+        .pattern-list li span {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>Binary Trading Prediction with Live Market Price</h1>
-
-        <!-- Currency Pair Selection -->
-        <div class="form-group">
-            <label for="currency-pair">Select Asset</label>
-            <select id="currency-pair">
-                <option value="USD/EUR">USD/EUR</option>
-                <option value="USD/INR">USD/INR</option>
-                <option value="USD/PKR">USD/PKR</option>
-                <option value="GBP/USD">GBP/USD</option>
-                <option value="BTC/USD">BTC/USD</option>
-                <option value="XAU/USD">XAU/USD (Gold)</option>
-                <option value="AUD/USD">AUD/USD</option>
-                <option value="NZD/USD">NZD/USD</option>
-                <option value="USD/CAD">USD/CAD</option>
-                <option value="USD/JPY">USD/JPY</option>
-            </select>
+        <!-- Sidebar for Candlestick Patterns -->
+        <div class="sidebar">
+            <h3>Candlestick Patterns</h3>
+            <ul class="pattern-list" id="pattern-list">
+                <!-- Detected patterns will be shown here -->
+            </ul>
         </div>
 
-        <!-- Time Frame Selection -->
-        <div class="form-group">
-            <label for="time-frame">Select Time Frame</label>
-            <select id="time-frame">
-                <option value="1m">1 Minute</option>
-                <option value="5m">5 Minutes</option>
-                <option value="15m">15 Minutes</option>
-                <option value="1h">1 Hour</option>
-                <option value="4h">4 Hours</option>
-                <option value="1d">1 Day</option>
-            </select>
+        <!-- Main content area -->
+        <div class="content">
+            <h1>Binary Trading Prediction</h1>
+
+            <!-- Currency Pair Selection -->
+            <div class="form-group">
+                <label for="currency-pair">Select Asset</label>
+                <select id="currency-pair">
+                    <option value="EUR/USD">EUR/USD</option>
+                    <option value="INR/USD">INR/USD</option>
+                    <option value="PKR/USD">PKR/USD</option>
+                    <option value="GBP/USD">GBP/USD</option>
+                    <option value="BTC/USD">BTC/USD</option>
+                    <option value="XAU/USD">XAU/USD (Gold)</option>
+                    <option value="AUD/USD">AUD/USD</option>
+                    <option value="NZD/USD">NZD/USD</option>
+                    <option value="USD/CAD">USD/CAD</option>
+                    <option value="USD/JPY">USD/JPY</option>
+                </select>
+            </div>
+
+            <!-- Time Frame Selection -->
+            <div class="form-group">
+                <label for="time-frame">Select Time Frame</label>
+                <select id="time-frame">
+                    <option value="1m">1 Minute</option>
+                    <option value="5m">5 Minutes</option>
+                    <option value="15m">15 Minutes</option>
+                    <option value="1h">1 Hour</option>
+                    <option value="4h">4 Hours</option>
+                    <option value="1d">1 Day</option>
+                </select>
+            </div>
+
+            <!-- Time Zone Selection -->
+            <div class="form-group">
+                <label for="time-zone">Select Time Zone</label>
+                <select id="time-zone">
+                    <option value="Etc/UTC">UTC</option>
+                    <option value="Asia/Kolkata">India (UTC+5:30)</option>
+                    <option value="Asia/Karachi">Pakistan (UTC+5:00)</option>
+                    <option value="Asia/Dhaka">Bangladesh (UTC+6:00)</option>
+                </select>
+            </div>
+
+            <!-- Predict Button -->
+            <div class="form-group">
+                <button class="btn" onclick="predictAndShowPrice()">Predict & Show Live Price</button>
+            </div>
+
+            <!-- Live Market Price -->
+            <div id="live-price" class="price-display">Live Price: Loading...</div>
+
+            <!-- Clock Display Based on Selected UTC Time -->
+            <div id="clock" class="clock-display">Clock: --:--</div>
+
+            <!-- Placeholder for Pattern Detection and Prediction -->
+            <div id="patterns" class="prediction-result"></div>
         </div>
-
-        <!-- Time Zone Selection -->
-        <div class="form-group">
-            <label for="time-zone">Select Time Zone</label>
-            <select id="time-zone">
-                <option value="Etc/UTC">UTC</option>
-                <option value="Asia/Kolkata">India (UTC+5:30)</option>
-                <option value="Asia/Karachi">Pakistan (UTC+5:00)</option>
-                <option value="Asia/Dhaka">Bangladesh (UTC+6:00)</option>
-            </select>
-        </div>
-
-        <!-- Predict Button -->
-        <div class="form-group">
-            <button class="btn" onclick="predictAndShowPrice()">Predict & Show Live Price</button>
-        </div>
-
-        <!-- Live Market Price -->
-        <div id="live-price" class="price-display">Live Price: Loading...</div>
-
-        <!-- Clock Display Based on Selected UTC Time -->
-        <div id="clock" class="clock-display">Clock: --:--</div>
-
-        <!-- Placeholder for Pattern Detection and Prediction -->
-        <div id="patterns"></div>
-
     </div>
 
     <script>
         let lastClosePrice = null;
-        let refreshInterval = 60000; // Auto-refresh every 60 seconds
+        let lastPrediction = null;
+        let refreshInterval = 5000; // Refresh every 5 seconds
 
+        // List of detected patterns for multiple currency pairs (simulation)
+        const detectedPatterns = {
+            "EUR/USD": "Bullish Engulfing",
+            "INR/USD": "Bearish Engulfing",
+            "BTC/USD": "Doji",
+            "GBP/USD": "Hammer",
+        };
+
+        // Show detected patterns on the left sidebar
+        function displayDetectedPatterns() {
+            const patternListElement = document.getElementById('pattern-list');
+            patternListElement.innerHTML = '';
+            for (const [pair, pattern] of Object.entries(detectedPatterns)) {
+                const listItem = `<li>${pair}: <span>${pattern}</span></li>`;
+                patternListElement.innerHTML += listItem;
+            }
+        }
+
+        // Display clock based on selected time zone
         function startClock(timeZone) {
             const clockElement = document.getElementById('clock');
             setInterval(() => {
@@ -141,8 +185,8 @@
         }
 
         function getRandomPriceChange() {
-            // Simulate a price change randomly
-            return (Math.random() * 0.01 - 0.005).toFixed(4); // Small price fluctuation
+            // Simulate a small price change randomly (more frequent)
+            return (Math.random() * 0.001 - 0.0005).toFixed(4); // Small price fluctuation
         }
 
         function simulateLivePrice(currentPrice) {
@@ -150,27 +194,67 @@
             return parseFloat((parseFloat(currentPrice) + parseFloat(getRandomPriceChange())).toFixed(4));
         }
 
-        function predictNextCandle(timeFrame, currentPrice) {
-            const randomDirection = Math.random() > 0.5 ? 'up' : 'down'; // Random prediction
-            const nextCandleColor = randomDirection === 'up' ? `<span class="green-text">Green</span>` : `<span class="red-text">Red</span>`;
-            let timeFrameText = '';
-            switch (timeFrame) {
-                case "1m": timeFrameText = "1 minute"; break;
-                case "5m": timeFrameText = "5 minutes"; break;
-                case "15m": timeFrameText = "15 minutes"; break;
-                case "1h": timeFrameText = "1 hour"; break;
-                case "4h": timeFrameText = "4 hours"; break;
-                case "1d": timeFrameText = "1 day"; break;
-                default: timeFrameText = "unknown"; break;
-            }
+        function getNextCandleTime(frame) {
             const now = new Date();
-            const utcTime = now.toISOString().substring(11, 19); // Extract UTC time in HH:MM:SS format
-            return `The Next Candle will be ${nextCandleColor} from Current Price <strong>${currentPrice}</strong> in the next ${timeFrameText} Candle @ UTC Time: ${utcTime}`;
+            const nextTime = new Date(now);
+
+            switch (frame) {
+                case "1m":
+                    nextTime.setMinutes(now.getMinutes() + 1);
+                    nextTime.setSeconds(0);
+                    break;
+                case "5m":
+                    nextTime.setMinutes(Math.ceil(now.getMinutes() / 5) * 5);
+                    nextTime.setSeconds(0);
+                    break;
+                case "15m":
+                    nextTime.setMinutes(Math.ceil(now.getMinutes() / 15) * 15);
+                    nextTime.setSeconds(0);
+                    break;
+                case "1h":
+                    nextTime.setHours(now.getHours() + 1);
+                    nextTime.setMinutes(0);
+                    nextTime.setSeconds(0);
+                    break;
+                case "4h":
+                    nextTime.setHours(Math.ceil(now.getHours() / 4) * 4);
+                    nextTime.setMinutes(0);
+                    nextTime.setSeconds(0);
+                    break;
+                case "1d":
+                    nextTime.setDate(now.getDate() + 1);
+                    nextTime.setHours(0);
+                    nextTime.setMinutes(0);
+                    nextTime.setSeconds(0);
+                    break;
+                default:
+                    nextTime.setMinutes(now.getMinutes() + 1); // Fallback to 1 minute
+                    nextTime.setSeconds(0);
+                    break;
+            }
+            return nextTime;
         }
 
-        function displayPrediction(prediction) {
+        function predictNextCandle(timeFrame, currentPrice, currencyPair) {
+            const randomDirection = Math.random() > 0.5 ? 'up' : 'down'; // Random prediction
+            const nextCandleColor = randomDirection === 'up' ? `<span class="green-text">Green</span>` : `<span class="red-text">Red</span>`;
+            const nextCandleTime = getNextCandleTime(timeFrame).toLocaleTimeString();
+            return {
+                message: `The Next Candle will be ${nextCandleColor} for ${currencyPair} from Current Price <strong>${currentPrice}</strong> closing at ${nextCandleTime}`,
+                direction: randomDirection
+            };
+        }
+
+        function displayPrediction(prediction, previousPrediction) {
             const patternsElement = document.getElementById('patterns');
-            patternsElement.innerHTML = `<p>${prediction}</p>`;
+            let resultText = prediction.message;
+
+            if (previousPrediction) {
+                const actualDirection = prediction.direction === previousPrediction.direction ? "correct" : "wrong";
+                resultText += `<br/><strong>Last Prediction was ${actualDirection}.</strong>`;
+            }
+
+            patternsElement.innerHTML = `<p>${resultText}</p>`;
         }
 
         function updateLivePrice(price) {
@@ -179,23 +263,33 @@
         }
 
         function predictAndShowPrice() {
+            const currencyPair = document.getElementById("currency-pair").value;
             const timeZone = document.getElementById("time-zone").value;
             const timeFrame = document.getElementById("time-frame").value;
 
             // Start the clock with the selected time zone
             startClock(timeZone);
 
-            // Simulate the initial live price
+            // Show the initial live price immediately
             let currentPrice = 1.1580; // Simulated initial price
+            updateLivePrice(currentPrice);
 
-            // Update live price at regular intervals and show prediction
+            // Display detected candlestick patterns on the left
+            displayDetectedPatterns();
+
+            // Predict the next candle immediately
+            let prediction = predictNextCandle(timeFrame, currentPrice, currencyPair);
+            displayPrediction(prediction, lastPrediction);
+
+            // Continue updating live price at regular intervals
             setInterval(() => {
                 currentPrice = simulateLivePrice(currentPrice);
                 updateLivePrice(currentPrice);
 
-                // Predict next candle based on time frame
-                const prediction = predictNextCandle(timeFrame, currentPrice);
-                displayPrediction(prediction);
+                // Update prediction for the next candle
+                lastPrediction = prediction;
+                prediction = predictNextCandle(timeFrame, currentPrice, currencyPair);
+                displayPrediction(prediction, lastPrediction);
             }, refreshInterval);
         }
     </script>
