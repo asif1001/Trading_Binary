@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>1-Minute Candle Prediction System</title>
+    <title>Prediction System for Gold & BTC</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,10 +71,6 @@
             color: red;
             font-weight: bold;
         }
-        .pattern-list, .prediction-table {
-            list-style: none;
-            padding: 0;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -90,68 +86,34 @@
         th {
             background-color: #f2f2f2;
         }
-        .status {
-            font-size: 1.2rem;
-            margin-top: 10px;
-        }
-        .connected {
-            color: green;
-        }
-        .disconnected {
-            color: red;
-        }
-        .loading {
-            color: grey;
-        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Sidebar for Candlestick Patterns -->
-        <div class="sidebar">
-            <h3>Candlestick Patterns</h3>
-            <table id="candlestick-patterns-table">
-                <thead>
-                    <tr>
-                        <th>Pair</th>
-                        <th>Pattern</th>
-                        <th>Time</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="pattern-list">
-                    <!-- Detected patterns will be shown here -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Main content area -->
         <div class="content">
-            <h1>1-Minute Candle Prediction</h1>
+            <h1>Gold & Bitcoin Candle Prediction</h1>
 
             <!-- MetaApi Connection Status -->
             <div id="connection-status" class="status disconnected">Not connected to MetaApi</div>
 
-            <!-- Currency Pair Selection -->
+            <!-- Asset Selection -->
             <div class="form-group">
-                <label for="currency-pair">Select Asset</label>
-                <select id="currency-pair">
-                    <option value="EURUSD">EUR/USD</option>
-                    <option value="GBPUSD">GBP/USD</option>
-                    <option value="USDJPY">USD/JPY</option>
-                    <option value="USDCAD">USD/CAD</option>
+                <label for="asset-pair">Select Asset</label>
+                <select id="asset-pair">
+                    <option value="XAUUSD">Gold (XAU/USD)</option>
+                    <option value="BTCUSD">Bitcoin (BTC/USD)</option>
                 </select>
             </div>
 
-            <!-- Time Zone Selection (Default: India) -->
+            <!-- Time Frame Selection -->
             <div class="form-group">
-                <label for="time-zone">Select Time Zone</label>
-                <select id="time-zone">
-                    <option value="Asia/Kolkata" selected>India (UTC+5:30)</option> <!-- Default is India -->
-                    <option value="Etc/UTC">UTC</option>
-                    <option value="Asia/Karachi">Pakistan (UTC+5:00)</option>
-                    <option value="Asia/Dhaka">Bangladesh (UTC+6:00)</option>
+                <label for="time-frame">Select Time Frame</label>
+                <select id="time-frame">
+                    <option value="15m">15 Minutes</option>
+                    <option value="30m">30 Minutes</option>
+                    <option value="1h">1 Hour</option>
+                    <option value="4h">4 Hours</option>
                 </select>
             </div>
 
@@ -164,22 +126,18 @@
             <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
             <div id="loading-indicator" class="loading"></div>
 
-            <!-- Clock Display Based on Selected UTC Time -->
-            <div id="clock" class="clock-display">Clock: --:--</div>
-
-            <!-- Placeholder for Pattern Detection and Prediction -->
+            <!-- Prediction Result -->
             <div id="patterns" class="prediction-result"></div>
 
             <!-- Prediction Table -->
-            <h3>Prediction History (Last 24 Hours)</h3>
+            <h3>Prediction History</h3>
             <table id="prediction-history-table">
                 <thead>
                     <tr>
-                        <th>Pair</th>
-                        <th>Opening Time</th>
-                        <th>Prediction Price</th>
-                        <th>Closing Time</th>
-                        <th>Closing Price</th>
+                        <th>Asset</th>
+                        <th>Time Frame</th>
+                        <th>Prediction</th>
+                        <th>Live Price</th>
                         <th>Result</th>
                     </tr>
                 </thead>
@@ -195,8 +153,8 @@
 
     <script>
         // MetaApi token and account setup
-        const api = new MetaApi('eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIzNjc3YjViYjVkMzU2MTk1ZGM5ZGE2MDk0YjUxYzkzYiIsInBlcm1pc3Npb25zIjpbXSwiYWNjZXNzUnVsZXMiOlt7ImlkIjoidHJhZGluZy1hY2NvdW50LW1hbmFnZW1lbnQtYXBpIiwibWV0aG9kcyI6WyJ0cmFkaW5nLWFjY291bnQtbWFuYWdlbWVudC1hcGk6cmVzdDpwdWJsaWM6KjoqIl0sInJvbGVzIjpbInJlYWRlciJdLCJyZXNvdXJjZXMiOlsiYWNjb3VudDokVVNFUl9JRCQ6OWU3N2U5MzgtMzNmMS00NTlhLTgzMWUtMTk2N2NkZDZjNWViIl19LHsiaWQiOiJtZXRhYXBpLXJlc3QtYXBpIiwibWV0aG9kcyI6WyJtZXRhYXBpLWFwaTpyZXN0OnB1YmxpYzoqOioiXSwicm9sZXMiOlsicmVhZGVyIiwid3JpdGVyIl0sInJlc291cmNlcyI6WyJhY2NvdW50OiRVU0VSX0lEJDo5ZTc3ZTkzOC0zM2YxLTQ1OWEtODMxZS0xOTY3Y2RkNmM1ZWIiXX0seyJpZCI6Im1ldGFhcGktcnBjLWFwaSIsIm1ldGhvZHMiOlsibWV0YWFwaS1hcGk6d3M6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbImFjY291bnQ6JFVTRVJfSUQkOjllNzdlOTM4LTMzZjEtNDU5YS04MzFlLTE5NjdjZGQ2YzVlYiJdfSx7ImlkIjoibWV0YXN0YXRzLWFwaSIsIm1ldGhvZHMiOlsibWV0YXN0YXRzLWFwaTpyZXN0OnB1YmxpYzoqOioiXSwicm9sZXMiOlsicmVhZGVyIl0sInJlc291cmNlcyI6WyJhY2NvdW50OiRVU0VSX0lEJDo5ZTc3ZTkzOC0zM2YxLTQ1OWEtODMxZS0xOTY3Y2RkNmM1ZWIiXX1dfQ.FY2PzdibvKwJuZuhPFsYNVFDEtrwuAi5QuLmTrrMStRtABRUvopPWBHwPeKjw1Uhu2z-lQBMi40nT_9IZqkoUqrTBRx9Txfk-rCZ8TvIu1313PW57ls6AFgK9QV6Sl1-woWcolXmSEDOtKjlKIlzmmOtG-8ZtBAu0LidxFOgHQ8ubH9BDpVg_DQ0wmS0gi0LdSKitt0wam0dFa0aEoEm-sEM6INk-cksVceVj0uwQI9R0jhqSCxVJWHWUtcUq5TByWUApPM9YT-K0InDbCWx9hRfR38PAmWyB6EC15PynD5DuEyUfl7arA5g2fkRacGdWWJKHQ-NVMBkRoOHCBfjYNfDOkaGCdtVNsWIJdtvpdOTAasB19eb71sn6js4kbV51z1ar3gROsbFT-ax4BlVAtlv8Hn_813z6It8w7hoA5vVLYbsDhJRalk_h17WqX6zKkmAi63S7fCm7_HoEpZ8y2OOuhoPAqFVnza-EluHMAqd93qSOJPUh0WpQo38Razwo1zJMwD0H4GGHZU6ldYdkwDS7l8Wv9nSyyBMULiG-9tDQUEW8-s0imNnt131HMiPMXfHRYJCU8OGdzB7ds-nlImqBvE05QzdPIkNiUBSePIOgDVZaNoYYY2Qth9N8NvV8bKpxEo3BV4coY-5gogFWlGWRWCXE2Ss0lhp6wJeeKI');
-        const accountId = '9e77e938-33f1-459a-831e-1967cdd6c5eb';
+        const api = new MetaApi('YOUR_METAAPI_TOKEN'); // Replace with your MetaApi token
+        const accountId = 'YOUR_ACCOUNT_ID'; // Replace with your MetaApi account ID
 
         // Indicator for connection status
         let isConnected = false;
@@ -216,7 +174,7 @@
                 if (!account.connected) {
                     await account.connect();
                     console.log('Connected to MetaApi account.');
-                    isConnected = true; // Set connection flag to true
+                    isConnected = true;
                     connectionStatus.className = 'status connected';
                     connectionStatus.innerHTML = "Connected to MetaApi";
                 }
@@ -236,32 +194,41 @@
             }
         }
 
-        // Display clock based on selected time zone
-        function startClock(timeZone) {
-            const clockElement = document.getElementById('clock');
-            setInterval(() => {
-                const now = new Date();
-                const time = now.toLocaleTimeString('en-US', { timeZone: timeZone, hour12: true });
-                clockElement.innerHTML = `Clock (${timeZone}): ${time}`;
-            }, 1000); // Update every second
+        // Function to get time frame in milliseconds
+        function getTimeFrameMillis(timeFrame) {
+            switch (timeFrame) {
+                case '15m': return 900000; // 15 minutes
+                case '30m': return 1800000; // 30 minutes
+                case '1h': return 3600000; // 1 hour
+                case '4h': return 14400000; // 4 hours
+                default: return 900000; // Default to 15 minutes
+            }
         }
 
         // Main function to fetch price and make prediction
         async function predictAndShowPrice() {
-            const currencyPair = document.getElementById("currency-pair").value;
-            const timeZone = document.getElementById("time-zone").value;
-
-            // Start the clock with the selected time zone
-            startClock(timeZone);
+            const assetPair = document.getElementById("asset-pair").value;
+            const timeFrame = document.getElementById("time-frame").value;
 
             // Fetch and show the live price
-            const currentPrice = await fetchRealTimePrice(currencyPair);
+            const currentPrice = await fetchRealTimePrice(assetPair);
             document.getElementById('price-value').innerHTML = currentPrice;
 
-            // Create a simple prediction message (you can expand this logic)
-            const prediction = Math.random() > 0.5 ? 'Green' : 'Red';
-            const nextCandle = `The next candle will be ${prediction}.`;
+            // Create a simple prediction message
+            const prediction = Math.random() > 0.5 ? 'Up' : 'Down';
+            const nextCandle = `The next candle will go ${prediction} for ${assetPair} on ${timeFrame} timeframe.`;
             document.getElementById('patterns').innerHTML = nextCandle;
+
+            // Update prediction history table
+            const predictionTableBody = document.getElementById('prediction-table');
+            const row = `<tr>
+                <td>${assetPair}</td>
+                <td>${timeFrame}</td>
+                <td>${prediction}</td>
+                <td>${currentPrice}</td>
+                <td>Pending</td>
+            </tr>`;
+            predictionTableBody.innerHTML = row + predictionTableBody.innerHTML; // Insert latest prediction at the top
         }
     </script>
 </body>
