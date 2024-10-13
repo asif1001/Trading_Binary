@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Prediction System for Gold & BTC with TP/SL and Patterns</title>
+    <title>Gold & BTC Prediction with TP/SL and Patterns</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,19 +16,8 @@
             max-width: 900px;
             margin: 0 20px;
             display: flex;
-        }
-        .sidebar {
-            width: 300px;
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .content {
-            flex-grow: 1;
-            margin-left: 20px;
-        }
-        h1, h3 {
-            text-align: center;
+            flex-direction: column;
+            justify-content: center;
         }
         .form-group {
             margin-bottom: 15px;
@@ -59,18 +48,6 @@
             font-size: 1.5rem;
             text-align: center;
         }
-        .loading {
-            font-size: 1.2rem;
-            color: grey;
-        }
-        .green-text {
-            color: green;
-            font-weight: bold;
-        }
-        .red-text {
-            color: red;
-            font-weight: bold;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -86,134 +63,123 @@
         th {
             background-color: #f2f2f2;
         }
+        #tradingview_widget {
+            height: 400px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="content">
-            <h1>Gold & Bitcoin Prediction with TP/SL</h1>
+        <h1>Gold & Bitcoin Prediction with TP/SL</h1>
 
-            <!-- MetaApi Connection Status -->
-            <div id="connection-status" class="status disconnected">Not connected to MetaApi</div>
-
-            <!-- Asset Selection -->
-            <div class="form-group">
-                <label for="asset-pair">Select Asset</label>
-                <select id="asset-pair">
-                    <option value="XAUUSD">Gold (XAU/USD)</option>
-                    <option value="BTCUSD">Bitcoin (BTC/USD)</option>
-                </select>
-            </div>
-
-            <!-- Time Frame Selection -->
-            <div class="form-group">
-                <label for="time-frame">Select Time Frame</label>
-                <select id="time-frame">
-                    <option value="15m">15 Minutes</option>
-                    <option value="30m">30 Minutes</option>
-                    <option value="1h">1 Hour</option>
-                    <option value="4h">4 Hours</option>
-                </select>
-            </div>
-
-            <!-- Predict Button -->
-            <div class="form-group">
-                <button class="btn" onclick="predictAndShowPrice()">Predict & Show Live Price</button>
-            </div>
-
-            <!-- Live Market Price -->
-            <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
-            <div id="loading-indicator" class="loading"></div>
-
-            <!-- Prediction Result with TP and SL -->
-            <div id="patterns" class="prediction-result"></div>
-
-            <!-- Candlestick Patterns -->
-            <h3>Detected Candlestick Patterns</h3>
-            <table id="candlestick-patterns-table">
-                <thead>
-                    <tr>
-                        <th>Asset</th>
-                        <th>Pattern</th>
-                        <th>Time Frame</th>
-                        <th>Suggested Action</th>
-                    </tr>
-                </thead>
-                <tbody id="pattern-list">
-                    <!-- Detected patterns will be shown here -->
-                </tbody>
-            </table>
-
-            <!-- Prediction Table -->
-            <h3>Prediction History</h3>
-            <table id="prediction-history-table">
-                <thead>
-                    <tr>
-                        <th>Asset</th>
-                        <th>Time Frame</th>
-                        <th>Prediction</th>
-                        <th>Live Price</th>
-                        <th>Entry Price</th>
-                        <th>TP</th>
-                        <th>SL</th>
-                        <th>Result</th>
-                    </tr>
-                </thead>
-                <tbody id="prediction-table">
-                    <!-- Prediction history will be populated here -->
-                </tbody>
-            </table>
+        <!-- Asset Selection -->
+        <div class="form-group">
+            <label for="asset-pair">Select Asset</label>
+            <select id="asset-pair" onchange="loadTradingViewChart()">
+                <option value="XAUUSD">Gold (XAU/USD)</option>
+                <option value="BTCUSD">Bitcoin (BTC/USD)</option>
+            </select>
         </div>
+
+        <!-- Time Frame Selection -->
+        <div class="form-group">
+            <label for="time-frame">Select Time Frame</label>
+            <select id="time-frame">
+                <option value="15m">15 Minutes</option>
+                <option value="30m">30 Minutes</option>
+                <option value="1h">1 Hour</option>
+                <option value="4h">4 Hours</option>
+            </select>
+        </div>
+
+        <!-- TradingView Widget for Live Chart -->
+        <div id="tradingview_widget"></div>
+
+        <!-- Predict Button -->
+        <div class="form-group">
+            <button class="btn" onclick="predictAndShowPrice()">Predict & Show TP/SL</button>
+        </div>
+
+        <!-- Prediction Result with TP and SL -->
+        <div id="patterns" class="prediction-result"></div>
+
+        <!-- Candlestick Patterns -->
+        <h3>Detected Candlestick Patterns</h3>
+        <table id="candlestick-patterns-table">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Pattern</th>
+                    <th>Time Frame</th>
+                    <th>Suggested Action</th>
+                </tr>
+            </thead>
+            <tbody id="pattern-list">
+                <!-- Detected patterns will be shown here -->
+            </tbody>
+        </table>
+
+        <!-- Prediction Table -->
+        <h3>Prediction History</h3>
+        <table id="prediction-history-table">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Time Frame</th>
+                    <th>Prediction</th>
+                    <th>Entry Price</th>
+                    <th>TP</th>
+                    <th>SL</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody id="prediction-table">
+                <!-- Prediction history will be populated here -->
+            </tbody>
+        </table>
     </div>
 
-    <!-- Load MetaApi SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/metaapi.cloud-sdk@7.3.2/lib/metaapi.min.js"></script>
+    <!-- TradingView Widget Script -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 
+    <!-- Custom Script -->
     <script>
-        // MetaApi token and account setup
-        const api = new MetaApi('YOUR_METAAPI_TOKEN'); // Replace with your MetaApi token
-        const accountId = 'YOUR_ACCOUNT_ID'; // Replace with your MetaApi account ID
+        // Function to load TradingView widget based on selected asset
+        function loadTradingViewChart() {
+            const asset = document.getElementById("asset-pair").value;
 
-        // Indicator for connection status
-        let isConnected = false;
+            // Remove existing widget (if any)
+            const widgetContainer = document.getElementById("tradingview_widget");
+            widgetContainer.innerHTML = '';
 
-        // Function to fetch price and show connection status
-        async function fetchRealTimePrice(symbol) {
-            try {
-                const connectionStatus = document.getElementById('connection-status');
-                const loadingIndicator = document.getElementById('loading-indicator');
-
-                connectionStatus.className = 'status loading';
-                connectionStatus.innerHTML = "Connecting to MetaApi...";
-                loadingIndicator.innerHTML = "Fetching live price...";
-
-                const account = await api.metatraderAccountApi.getAccount(accountId);
-
-                if (!account.connected) {
-                    await account.connect();
-                    console.log('Connected to MetaApi account.');
-                    isConnected = true;
-                    connectionStatus.className = 'status connected';
-                    connectionStatus.innerHTML = "Connected to MetaApi";
-                }
-
-                const priceData = await account.getSymbolPrice(symbol);
-                const price = priceData.bid;  // Use the bid price for the current price
-                loadingIndicator.innerHTML = ""; // Clear loading indicator
-                return price;
-
-            } catch (error) {
-                console.error('Error fetching price:', error);
-                const connectionStatus = document.getElementById('connection-status');
-                connectionStatus.className = 'status disconnected';
-                connectionStatus.innerHTML = "Failed to connect to MetaApi";
-                document.getElementById('loading-indicator').innerHTML = "Error fetching price.";
-                return 'Error';
-            }
+            // Create TradingView widget
+            new TradingView.widget({
+                "width": "100%",
+                "height": 400,
+                "symbol": asset,
+                "interval": "15",
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "withdateranges": true,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": true,
+                "details": true,
+                "container_id": "tradingview_widget"
+            });
         }
 
-        // Function to calculate TP and SL
+        // Load default chart on page load
+        window.onload = function() {
+            loadTradingViewChart();
+        };
+
+        // Function to calculate TP and SL (dummy logic for now)
         function calculateTPandSL(currentPrice, asset) {
             let tp, sl;
             if (asset === 'XAUUSD') { // For Gold
@@ -226,7 +192,7 @@
             return { tp, sl };
         }
 
-        // Function to detect candlestick patterns (mock data for demo)
+        // Function to detect candlestick patterns (dummy logic for now)
         function detectCandlestickPatterns(asset) {
             const patterns = {
                 "XAUUSD": { pattern: "Bullish Engulfing", timeFrame: "1h", action: "Buy" },
@@ -235,14 +201,11 @@
             return patterns[asset] || null;
         }
 
-        // Main function to fetch price, predict and show TP/SL
-        async function predictAndShowPrice() {
+        // Main function to predict and show TP/SL
+        function predictAndShowPrice() {
             const assetPair = document.getElementById("asset-pair").value;
             const timeFrame = document.getElementById("time-frame").value;
-
-            // Fetch and show the live price
-            const currentPrice = await fetchRealTimePrice(assetPair);
-            document.getElementById('price-value').innerHTML = currentPrice;
+            const currentPrice = 1000;  // Mock current price, update with real price if available
 
             // Calculate TP and SL
             const { tp, sl } = calculateTPandSL(currentPrice, assetPair);
@@ -271,7 +234,6 @@
                 <td>${assetPair}</td>
                 <td>${timeFrame}</td>
                 <td>${prediction}</td>
-                <td>${currentPrice}</td>
                 <td>${currentPrice}</td>
                 <td>${tp}</td>
                 <td>${sl}</td>
