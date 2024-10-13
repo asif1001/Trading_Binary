@@ -83,8 +83,8 @@
         <div class="form-group">
             <label for="time-frame">Select Time Frame</label>
             <select id="time-frame">
-                <option value="15m">15 Minutes</option>
-                <option value="30m">30 Minutes</option>
+                <option value="15min">15 Minutes</option>
+                <option value="30min">30 Minutes</option>
                 <option value="1h">1 Hour</option>
                 <option value="4h">4 Hours</option>
             </select>
@@ -130,8 +130,13 @@
         // Function to fetch historical data from Twelve Data
         async function fetchHistoricalData(symbol, interval) {
             try {
-                const response = await fetch(`${twelveDataUrl}?symbol=${symbol}&interval=${interval}&outputsize=30&apikey=${apiKey}`);
+                const response = await fetch(`${twelveDataUrl}?symbol=${symbol}&interval=${interval}&outputsize=50&apikey=${apiKey}`);
                 const data = await response.json();
+                
+                // Handle case where no data is returned or error occurs
+                if (!data.values || data.values.length === 0) {
+                    throw new Error('No data available for the selected asset or time frame.');
+                }
                 return data.values.map(value => parseFloat(value.close)); // Return close prices
             } catch (error) {
                 console.error('Error fetching historical data:', error);
@@ -168,6 +173,8 @@
 
             // Fetch historical data for the selected asset and time frame
             const prices = await fetchHistoricalData(assetPair, timeFrame);
+            
+            // Ensure we have enough data to calculate MAs (at least 15 data points)
             if (prices.length < 15) {
                 alert('Not enough data to calculate moving averages.');
                 return;
