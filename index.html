@@ -3,149 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Binary Trading Prediction</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Binary Trading Prediction with Real-Time Market Price</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; display: flex; justify-content: center; }
-        .container { max-width: 900px; margin: 0 20px; display: flex; }
-        .sidebar { width: 300px; background-color: #f4f4f4; padding: 10px; border-radius: 5px; }
-        .content { flex-grow: 1; margin-left: 20px; }
-        h1, h3 { text-align: center; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; }
-        select, input { width: 100%; padding: 10px; margin-top: 5px; }
-        .btn { background-color: #007bff; color: white; padding: 10px; border: none; cursor: pointer; text-align: center; }
-        .btn:hover { background-color: #0056b3; }
-        .price-display, .clock-display, .prediction-result { margin-top: 20px; font-size: 1.5rem; text-align: center; }
-        .loading { font-size: 1.2rem; color: grey; }
-        .green-text { color: green; font-weight: bold; }
-        .red-text { color: red; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid black; padding: 10px; text-align: center; }
-        th { background-color: #f2f2f2; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 20px;
+            display: flex;
+        }
+        .sidebar {
+            width: 300px;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .content {
+            flex-grow: 1;
+            margin-left: 20px;
+        }
+        h1, h3 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .price-display, .clock-display, .prediction-result {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        .loading {
+            font-size: 1.2rem;
+            color: grey;
+        }
+        .green-text {
+            color: green;
+            font-weight: bold;
+        }
+        .red-text {
+            color: red;
+            font-weight: bold;
+        }
+        .pattern-list, .prediction-table {
+            list-style: none;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- Sidebar for Candlestick Patterns -->
-    <div class="sidebar">
-        <h3>Candlestick Patterns</h3>
-        <table>
-            <thead><tr><th>Pair</th><th>Pattern</th><th>Time</th><th>Action</th></tr></thead>
-            <tbody id="pattern-list"></tbody>
-        </table>
+    <div class="container">
+        <!-- Sidebar for Candlestick Patterns -->
+        <div class="sidebar">
+            <h3>Candlestick Patterns</h3>
+            <table id="candlestick-patterns-table">
+                <thead>
+                    <tr>
+                        <th>Pair</th>
+                        <th>Pattern</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="pattern-list">
+                    <!-- Detected patterns will be shown here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Main content area -->
+        <div class="content">
+            <h1>Binary Trading Prediction</h1>
+
+            <!-- Currency Pair Selection -->
+            <div class="form-group">
+                <label for="currency-pair">Select Asset</label>
+                <select id="currency-pair">
+                    <option value="EUR/USD">EUR/USD</option>
+                    <option value="INR/USD">INR/USD</option>
+                    <option value="PKR/USD">PKR/USD</option>
+                    <option value="GBP/USD">GBP/USD</option>
+                    <option value="BTC/USD">BTC/USD</option>
+                    <option value="XAU/USD">XAU/USD (Gold)</option>
+                    <option value="AUD/USD">AUD/USD</option>
+                    <option value="NZD/USD">NZD/USD</option>
+                    <option value="USD/CAD">USD/CAD</option>
+                    <option value="USD/JPY">USD/JPY</option>
+                </select>
+            </div>
+
+            <!-- Time Frame Selection -->
+            <div class="form-group">
+                <label for="time-frame">Select Time Frame</label>
+                <select id="time-frame">
+                    <option value="1m">1 Minute</option>
+                    <option value="5m">5 Minutes</option>
+                    <option value="15m">15 Minutes</option>
+                    <option value="1h">1 Hour</option>
+                    <option value="4h">4 Hours</option>
+                    <option value="1d">1 Day</option>
+                </select>
+            </div>
+
+            <!-- Time Zone Selection -->
+            <div class="form-group">
+                <label for="time-zone">Select Time Zone</label>
+                <select id="time-zone">
+                    <option value="Etc/UTC">UTC</option>
+                    <option value="Asia/Kolkata">India (UTC+5:30)</option>
+                    <option value="Asia/Karachi">Pakistan (UTC+5:00)</option>
+                    <option value="Asia/Dhaka">Bangladesh (UTC+6:00)</option>
+                </select>
+            </div>
+
+            <!-- Predict Button -->
+            <div class="form-group">
+                <button class="btn" onclick="predictAndShowPrice()">Predict & Show Live Price</button>
+            </div>
+
+            <!-- Live Market Price -->
+            <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
+            <div id="loading-indicator" class="loading"></div>
+
+            <!-- Clock Display Based on Selected UTC Time -->
+            <div id="clock" class="clock-display">Clock: --:--</div>
+
+            <!-- Placeholder for Pattern Detection and Prediction -->
+            <div id="patterns" class="prediction-result"></div>
+
+            <!-- Prediction Table -->
+            <h3>Prediction History (Last 24 Hours)</h3>
+            <table id="prediction-history-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Pair</th>
+                        <th>Direction</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="prediction-table">
+                    <!-- Prediction history will be populated here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- Main content area -->
-    <div class="content">
-        <h1>Binary Trading Prediction</h1>
+    <script>
+        let lastClosePrice = null;
+        let lastPrediction = null;
+        let correctPredictions = 0;
+        let totalPredictions = 0;
+        let refreshInterval = 60000; // Default to 1 minute
+        let priceCache = {}; // Store previous prices for faster loading
+        const API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY'; // Replace with your Alpha Vantage API key
+        const predictions = []; // To store predictions for the last 24 hours
 
-        <div class="form-group">
-            <label for="currency-pair">Select Asset</label>
-            <select id="currency-pair">
-                <option value="EUR/USD">EUR/USD</option>
-                <option value="AUD/USD">AUD/USD</option>
-                <option value="USD/JPY">USD/JPY</option>
-            </select>
-        </div>
+        // List of detected patterns for multiple currency pairs (simulation)
+        const detectedPatterns = {
+            "EUR/USD": "Bullish Engulfing",
+            "INR/USD": "Bearish Engulfing",
+            "BTC/USD": "Doji",
+            "GBP/USD": "Hammer",
+        };
 
-        <div class="form-group">
-            <label for="time-frame">Select Time Frame</label>
-            <select id="time-frame">
-                <option value="1m">1 Minute</option>
-                <option value="5m">5 Minutes</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="time-zone">Select Time Zone</label>
-            <select id="time-zone">
-                <option value="Etc/UTC">UTC</option>
-                <option value="Asia/Kolkata">India (UTC+5:30)</option>
-            </select>
-        </div>
-
-        <button class="btn" onclick="predictAndShowPrice()">Predict & Show Live Price</button>
-        
-        <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
-        <div id="loading-indicator" class="loading"></div>
-        <div id="clock" class="clock-display">Clock: --:--</div>
-        <div id="patterns" class="prediction-result"></div>
-
-        <h3>Prediction History</h3>
-        <table>
-            <thead><tr><th>Time</th><th>Pair</th><th>Direction</th><th>Result</th></tr></thead>
-            <tbody id="prediction-table"></tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    const API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY';
-    let priceCache = {};
-    let predictions = [];
-    let lastPrediction = null;
-
-    const detectedPatterns = { "EUR/USD": "Bullish Engulfing", "AUD/USD": "Bearish Engulfing" };
-
-    function displayPatterns() {
-        const tbody = document.getElementById('pattern-list');
-        tbody.innerHTML = '';
-        for (const [pair, pattern] of Object.entries(detectedPatterns)) {
-            const time = new Date().toLocaleTimeString(), action = pattern.includes("Bullish") ? "Buy" : "Sell";
-            tbody.innerHTML += `<tr><td>${pair}</td><td>${pattern}</td><td>${time}</td><td>${action}</td></tr>`;
+        // Show detected patterns on the left sidebar
+        function displayDetectedPatterns() {
+            const patternTableBody = document.getElementById('pattern-list');
+            patternTableBody.innerHTML = '';
+            for (const [pair, pattern] of Object.entries(detectedPatterns)) {
+                const time = new Date().toLocaleTimeString();
+                const action = pattern.includes("Bullish") ? "Buy" : "Sell";
+                const row = `<tr>
+                    <td>${pair}</td>
+                    <td>${pattern}</td>
+                    <td>${time}</td>
+                    <td>${action}</td>
+                </tr>`;
+                patternTableBody.innerHTML += row;
+            }
         }
-    }
 
-    function startClock(timeZone) {
-        setInterval(() => {
-            const now = new Date().toLocaleTimeString('en-US', { timeZone });
-            document.getElementById('clock').innerHTML = `Clock (${timeZone}): ${now}`;
-        }, 1000);
-    }
-
-    async function fetchPrice(symbol) {
-        if (priceCache[symbol]) return priceCache[symbol];
-        document.getElementById('loading-indicator').innerHTML = "Fetching price...";
-        try {
-            const response = await fetch(`https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${symbol.split('/')[0]}&to_currency=${symbol.split('/')[1]}&apikey=${API_KEY}`);
-            const data = await response.json();
-            const price = parseFloat(data['Realtime Currency Exchange Rate']['5. Exchange Rate']).toFixed(4);
-            priceCache[symbol] = price;
-            document.getElementById('loading-indicator').innerHTML = '';
-            return price;
-        } catch (error) {
-            console.error('Error fetching price:', error);
-            return 'Error';
+        // Display clock based on selected time zone
+        function startClock(timeZone) {
+            const clockElement = document.getElementById('clock');
+            setInterval(() => {
+                const now = new Date();
+                const time = now.toLocaleTimeString('en-US', { timeZone: timeZone, hour12: true });
+                clockElement.innerHTML = `Clock (${timeZone}): ${time}`;
+            }, 1000); // Update every second
         }
-    }
 
-    function predictNextCandle(pair, price) {
-        const direction = Math.random() > 0.5 ? 'up' : 'down';
-        const color = direction === 'up' ? `<span class="green-text">Green</span>` : `<span class="red-text">Red</span>`;
-        return { message: `Next candle for ${pair}: ${color} (Price: ${price})`, direction };
-    }
+        // Fetch real-time price from Alpha Vantage
+        async function fetchRealTimePrice(symbol) {
+            // Check if price is already cached
+            if (priceCache[symbol]) {
+                return priceCache[symbol];
+            }
 
-    function displayPrediction(prediction) {
-        const now = new Date().toLocaleTimeString();
-        const tbody = document.getElementById('prediction-table');
-        const result = lastPrediction ? (lastPrediction.direction === prediction.direction ? 'Correct' : 'Wrong') : 'N/A';
-        tbody.innerHTML += `<tr><td>${now}</td><td>${prediction.pair}</td><td>${prediction.direction === 'up' ? 'Up' : 'Down'}</td><td>${result}</td></tr>`;
-        lastPrediction = prediction;
-    }
+            try {
+                document.getElementById('loading-indicator').innerHTML = "Fetching live price...";
+                const response = await fetch(`https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${symbol.split('/')[0]}&to_currency=${symbol.split('/')[1]}&apikey=${API_KEY}`);
+                const data = await response.json();
+                const price = parseFloat(data['Realtime Currency Exchange Rate']['5. Exchange Rate']).toFixed(4);
+                priceCache[symbol] = price; // Cache the fetched price
+                document.getElementById('loading-indicator').innerHTML = ""; // Clear loading indicator
+                return price;
+            } catch (error) {
+                console.error('Error fetching price:', error);
+                document.getElementById('loading-indicator').innerHTML = "Error fetching price.";
+                return 'Error';
+            }
+        }
 
-    async function predictAndShowPrice() {
-        const pair = document.getElementById("currency-pair").value;
-        const timeZone = document.getElementById("time-zone").value;
-        const price = await fetchPrice(pair);
-        document.getElementById('price-value').innerHTML = price;
-        displayPatterns();
-        startClock(timeZone);
+        // Predict next candle
+        function predictNextCandle(timeFrame, currentPrice, currencyPair, learningAdjustment = false) {
+            let randomDirection = Math.random() > 0.5 ? 'up' : 'down';
 
-        const prediction = predictNextCandle(pair, price);
-        document.getElementById('patterns').innerHTML = prediction.message;
-        displayPrediction(prediction);
-    }
-</script>
+            // Basic learning mechanism: adjust based on the last wrong prediction
+            if (learningAdjustment && lastPrediction && lastPrediction.direction === "wrong") {
+                randomDirection = lastPrediction.direction === 'up' ? 'down' : 'up';
+            }
+
+            const nextCandleColor = randomDirection === 'up' ? `<span class="green-text">Green</span>` : `<span class="red-text">Red</span>`;
+            const now = new Date();
+            const nextCandleTime = new Date(now.getTime() + getTimeFrameMillis(timeFrame)).toLocaleTimeString();
+            return {
+                message: `The Next Candle will be ${nextCandleColor} for ${currencyPair} from Current Price <strong>${currentPrice}</strong> closing at ${nextCandleTime}`,
+                direction: randomDirection
+            };
+        }
+
+        // Display prediction and update prediction history table
+        function displayPrediction(prediction, previousPrediction) {
+            const predictionTableBody = document.getElementById('prediction-table');
+            const now = new Date().toLocaleTimeString();
+            const row = `<tr>
+                <td>${now}</td>
+                <td>${prediction.pair}</td>
+                <td>${prediction.direction === 'up' ? 'Up' : 'Down'}</td>
+                <td>${previousPrediction ? previousPrediction.result : 'N/A'}</td>
+            </tr>`;
+            predictionTableBody.innerHTML += row;
+
+            // Track prediction result for last 24 hours
+            predictions.push({
+                time: now,
+                pair: prediction.pair,
+                direction: prediction.direction,
+                result: previousPrediction ? previousPrediction.result : 'N/A'
+            });
+        }
+
+        // Helper function to get time frame in milliseconds
+        function getTimeFrameMillis(timeFrame) {
+            switch (timeFrame) {
+                case '1m': return 60000; // 1 minute in milliseconds
+                case '5m': return 300000; // 5 minutes in milliseconds
+                case '15m': return 900000; // 15 minutes in milliseconds
+                case '1h': return 3600000; // 1 hour in milliseconds
+                case '4h': return 14400000; // 4 hours in milliseconds
+                case '1d': return 86400000; // 1 day in milliseconds
+                default: return 60000; // Default to 1 minute
+            }
+        }
+
+        async function predictAndShowPrice() {
+            const currencyPair = document.getElementById("currency-pair").value;
+            const timeZone = document.getElementById("time-zone").value;
+            const timeFrame = document.getElementById("time-frame").value;
+
+            // Adjust refreshInterval based on the selected time frame
+            refreshInterval = getTimeFrameMillis(timeFrame);
+
+            // Start the clock with the selected time zone
+            startClock(timeZone);
+
+            // Fetch and show the live price immediately, display last known price if available
+            document.getElementById('price-value').innerHTML = priceCache[currencyPair] || 'Loading...'; // Show last known price
+            const currentPrice = await fetchRealTimePrice(currencyPair);
+            document.getElementById('price-value').innerHTML = currentPrice;
+
+            // Display detected candlestick patterns on the left
+            displayDetectedPatterns();
+
+            // Predict the next candle immediately
+            let prediction = predictNextCandle(timeFrame, currentPrice, currencyPair, true);
+            displayPrediction(prediction, lastPrediction);
+
+            // Continue updating live price and prediction at regular intervals
+            setInterval(async () => {
+                const updatedPrice = await fetchRealTimePrice(currencyPair);
+                document.getElementById('price-value').innerHTML = updatedPrice;
+
+                // Update prediction for the next candle
+                lastPrediction = prediction;
+                prediction = predictNextCandle(timeFrame, updatedPrice, currencyPair, true);
+                displayPrediction(prediction, lastPrediction);
+            }, refreshInterval);
+        }
+    </script>
 </body>
 </html>
