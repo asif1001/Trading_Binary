@@ -56,6 +56,14 @@
             font-size: 1.2em;
             text-align: center;
         }
+        .green-text {
+            color: green;
+            font-weight: bold;
+        }
+        .red-text {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -100,7 +108,6 @@
                 <option value="Asia/Kolkata">India (UTC+5:30)</option>
                 <option value="Asia/Karachi">Pakistan (UTC+5:00)</option>
                 <option value="Asia/Dhaka">Bangladesh (UTC+6:00)</option>
-                <!-- Add more time zones as needed -->
             </select>
         </div>
 
@@ -145,6 +152,7 @@
 
         function predictNextCandle(timeFrame, currentPrice) {
             const randomDirection = Math.random() > 0.5 ? 'up' : 'down'; // Random prediction
+            const nextCandleColor = randomDirection === 'up' ? `<span class="green-text">Green</span>` : `<span class="red-text">Red</span>`;
             let timeFrameText = '';
             switch (timeFrame) {
                 case "1m": timeFrameText = "1 minute"; break;
@@ -155,10 +163,12 @@
                 case "1d": timeFrameText = "1 day"; break;
                 default: timeFrameText = "unknown"; break;
             }
-            return `Prediction: The next candle in ${timeFrameText} will close ${randomDirection} from the price of ${currentPrice}`;
+            const now = new Date();
+            const utcTime = now.toISOString().substring(11, 19); // Extract UTC time in HH:MM:SS format
+            return `The Next Candle will be ${nextCandleColor} from Current Price <strong>${currentPrice}</strong> in the next ${timeFrameText} Candle @ UTC Time: ${utcTime}`;
         }
 
-        function displayPatterns(prediction) {
+        function displayPrediction(prediction) {
             const patternsElement = document.getElementById('patterns');
             patternsElement.innerHTML = `<p>${prediction}</p>`;
         }
@@ -185,7 +195,7 @@
 
                 // Predict next candle based on time frame
                 const prediction = predictNextCandle(timeFrame, currentPrice);
-                displayPatterns(prediction);
+                displayPrediction(prediction);
             }, refreshInterval);
         }
     </script>
