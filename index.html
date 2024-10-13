@@ -41,10 +41,10 @@
         .btn:hover {
             background-color: #0056b3;
         }
-        iframe {
-            width: 100%;
-            height: 400px;
+        #tradingview-widget-container {
             margin-top: 20px;
+            width: 100%;
+            height: 500px;
         }
     </style>
 </head>
@@ -54,12 +54,14 @@
         
         <!-- Currency Pair Selection -->
         <div class="form-group">
-            <label for="currency-pair">Select Currency Pair</label>
+            <label for="currency-pair">Select Asset</label>
             <select id="currency-pair">
                 <option value="USD/EUR">USD/EUR</option>
                 <option value="USD/INR">USD/INR</option>
                 <option value="USD/PKR">USD/PKR</option>
                 <option value="GBP/USD">GBP/USD</option>
+                <option value="BTC/USD">BTC/USD</option> <!-- Bitcoin -->
+                <option value="XAU/USD">XAU/USD (Gold)</option> <!-- Gold -->
             </select>
         </div>
 
@@ -84,18 +86,14 @@
         <!-- Placeholder for Prediction -->
         <div id="prediction-result" style="text-align:center; font-size: 1.5rem;"></div>
 
-        <!-- TradingView Chart -->
-        <div id="chart-container">
-            <iframe id="tradingview-widget" src="" frameborder="0" allowfullscreen></iframe>
+        <!-- TradingView Live Chart -->
+        <div id="tradingview-widget-container">
+            <div id="tradingview_chart"></div>
         </div>
     </div>
 
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-        function getTradingViewUrl(symbol, interval) {
-            // Generate the TradingView widget URL with dynamic currency pair and timeframe
-            return `https://s.tradingview.com/widgetembed/?symbol=${symbol}&interval=${interval}&theme=light&style=1&locale=en&toolbar_bg=%23f1f3f6&hide_side_toolbar=false&allow_symbol_change=true&save_image=true&studies=[]&show_popup_button=true&popup_width=600&popup_height=400`;
-        }
-
         function predictAndShowChart() {
             const currencyPair = document.getElementById("currency-pair").value;
             const timeFrame = document.getElementById("time-frame").value;
@@ -105,18 +103,20 @@
             const resultElement = document.getElementById("prediction-result");
             resultElement.textContent = `Predicted Movement for ${currencyPair} on ${timeFrame} time frame: ${prediction}`;
 
-            // Mapping currency pairs to TradingView symbols (you can adjust based on your requirements)
+            // Mapping assets (currencies, crypto, commodities) to TradingView symbols
             const symbolMap = {
                 "USD/EUR": "FX:EURUSD",
                 "USD/INR": "FX_IDC:USDINR",
                 "USD/PKR": "OANDA:USD_PKR",
-                "GBP/USD": "FX:GBPUSD"
+                "GBP/USD": "FX:GBPUSD",
+                "BTC/USD": "BITSTAMP:BTCUSD",  // Bitcoin symbol
+                "XAU/USD": "OANDA:XAUUSD"      // Gold symbol
             };
 
             const tradingViewSymbol = symbolMap[currencyPair] || "FX:EURUSD"; // Default to EUR/USD if no match
-            let interval = "1"; // Default interval (1 minute)
 
             // Map the selected timeframe to TradingView's interval format
+            let interval = "1"; // Default to 1 minute
             switch (timeFrame) {
                 case "1m": interval = "1"; break;
                 case "5m": interval = "5"; break;
@@ -127,9 +127,21 @@
                 default: interval = "1"; // Fallback to 1 minute
             }
 
-            // Update the TradingView widget with the selected currency pair and time frame
-            const tradingViewWidget = document.getElementById("tradingview-widget");
-            tradingViewWidget.src = getTradingViewUrl(tradingViewSymbol, interval);
+            // Load the TradingView widget to display live chart
+            new TradingView.widget({
+                "width": "100%",
+                "height": 500,
+                "symbol": tradingViewSymbol,
+                "interval": interval,
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "container_id": "tradingview_chart"
+            });
         }
     </script>
 </body>
