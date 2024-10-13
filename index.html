@@ -121,10 +121,10 @@
             <div class="form-group">
                 <label for="currency-pair">Select Asset</label>
                 <select id="currency-pair">
-                    <option value="EURUSD=X">EUR/USD</option>
-                    <option value="GBPUSD=X">GBP/USD</option>
-                    <option value="USDJPY=X">USD/JPY</option>
-                    <option value="USDCAD=X">USD/CAD</option>
+                    <option value="EUR/USD">EUR/USD</option>
+                    <option value="GBP/USD">GBP/USD</option>
+                    <option value="USD/JPY">USD/JPY</option>
+                    <option value="USDCAD">USD/CAD</option>
                 </select>
             </div>
 
@@ -190,8 +190,8 @@
         let refreshInterval = 60000; // Default to 1 minute
         let priceCache = {}; // Store previous prices for faster loading
 
-        // Yahoo Finance API endpoint for forex pairs
-        const YAHOO_FINANCE_API = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=';
+        const TWELVE_DATA_API = 'https://api.twelvedata.com/price';
+        const API_KEY = '6ecda4d1ff2c4f0b91b7ddf7d7140721'; // Replace with your Twelve Data API key
 
         // List of detected patterns for multiple currency pairs (simulation)
         const detectedPatterns = {
@@ -227,13 +227,13 @@
             }, 1000); // Update every second
         }
 
-        // Fetch real-time forex price from Yahoo Finance
+        // Fetch real-time price from Twelve Data API
         async function fetchRealTimePrice(symbol) {
             try {
                 document.getElementById('loading-indicator').innerHTML = "Fetching live price...";
-                const response = await fetch(`${YAHOO_FINANCE_API}${symbol}`);
+                const response = await fetch(`${TWELVE_DATA_API}?symbol=${symbol}&apikey=${API_KEY}`);
                 const data = await response.json();
-                const price = parseFloat(data.quoteResponse.result[0].regularMarketPrice).toFixed(4);
+                const price = parseFloat(data.price).toFixed(4);
                 document.getElementById('loading-indicator').innerHTML = ""; // Clear loading indicator
                 return price;
             } catch (error) {
