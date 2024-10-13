@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Binary Trading Prediction with Candlestick Patterns</title>
+    <title>Binary Trading Prediction with Live Market Price</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,20 +41,26 @@
         .btn:hover {
             background-color: #0056b3;
         }
-        #tradingview-widget-container {
+        .price-display {
             margin-top: 20px;
-            width: 100%;
-            height: 500px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        .clock-display {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.2rem;
         }
         #patterns {
             margin-top: 20px;
             font-size: 1.2em;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Binary Trading Prediction Tool with Candlestick Patterns</h1>
+        <h1>Binary Trading Prediction with Live Market Price</h1>
 
         <!-- Currency Pair Selection -->
         <div class="form-group">
@@ -94,144 +100,93 @@
                 <option value="Asia/Kolkata">India (UTC+5:30)</option>
                 <option value="Asia/Karachi">Pakistan (UTC+5:00)</option>
                 <option value="Asia/Dhaka">Bangladesh (UTC+6:00)</option>
-                <!-- Add more time zones here as needed -->
+                <!-- Add more time zones as needed -->
             </select>
         </div>
 
         <!-- Predict Button -->
         <div class="form-group">
-            <button class="btn" onclick="predictAndShowChart()">Predict & Show Chart</button>
+            <button class="btn" onclick="predictAndShowPrice()">Predict & Show Live Price</button>
         </div>
+
+        <!-- Live Market Price -->
+        <div id="live-price" class="price-display">Live Price: Loading...</div>
+
+        <!-- Clock Display Based on Selected UTC Time -->
+        <div id="clock" class="clock-display">Clock: --:--</div>
 
         <!-- Placeholder for Pattern Detection and Prediction -->
         <div id="patterns"></div>
 
-        <!-- TradingView Live Chart -->
-        <div id="tradingview-widget-container">
-            <div id="tradingview_chart"></div>
-        </div>
     </div>
 
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
         let lastClosePrice = null;
-        let refreshInterval = 60000; // Set auto-refresh every 60 seconds
+        let refreshInterval = 60000; // Auto-refresh every 60 seconds
 
-        function getTradingViewUrl(symbol, interval) {
-            return `https://s.tradingview.com/widgetembed/?symbol=${symbol}&interval=${interval}&theme=light&style=1&locale=en&toolbar_bg=%23f1f3f6&hide_side_toolbar=false&allow_symbol_change=true&save_image=true&studies=[]&show_popup_button=true&popup_width=600&popup_height=400`;
+        function startClock(timeZone) {
+            const clockElement = document.getElementById('clock');
+            setInterval(() => {
+                const now = new Date();
+                const time = now.toLocaleTimeString('en-US', { timeZone: timeZone, hour12: true });
+                clockElement.innerHTML = `Clock (${timeZone}): ${time}`;
+            }, 1000); // Update every second
         }
 
-        function detectPatterns(data) {
-            const patterns = [];
-
-            for (let i = 1; i < data.length; i++) {
-                const prevCandle = data[i - 1];
-                const currentCandle = data[i];
-
-                const [prevOpen, prevClose] = [prevCandle.open, prevCandle.close];
-                const [open, close] = [currentCandle.open, currentCandle.close];
-
-                // Bullish Engulfing Pattern
-                if (prevOpen > prevClose && open < close && open < prevClose && close > prevOpen) {
-                    patterns.push({ type: 'Bullish Engulfing', time: currentCandle.time });
-                }
-
-                // Bearish Engulfing Pattern
-                if (prevOpen < prevClose && open > close && open > prevClose && close < prevOpen) {
-                    patterns.push({ type: 'Bearish Engulfing', time: currentCandle.time });
-                }
-            }
-
-            return patterns;
+        function getRandomPriceChange() {
+            // Simulate a price change randomly
+            return (Math.random() * 0.01 - 0.005).toFixed(4); // Small price fluctuation
         }
 
-        function displayPatterns(patterns) {
-            const patternsElement = document.getElementById('patterns');
-            if (patterns.length === 0) {
-                if (lastClosePrice !== null) {
-                    const prediction = Math.random() > 0.5 ? 'up' : 'down';
-                    patternsElement.innerHTML = `<p>No patterns detected. Next candle predicted to close ${prediction} from ${lastClosePrice.toFixed(4)}</p>`;
-                } else {
-                    patternsElement.innerHTML = "<p>No patterns detected and no prediction available.</p>";
-                }
-            } else {
-                patternsElement.innerHTML = patterns.map(pattern => {
-                    return `<p>${pattern.type} pattern detected at time: ${new Date(pattern.time).toLocaleString()}</p>`;
-                }).join('');
-            }
+        function simulateLivePrice(currentPrice) {
+            // Simulate a live price update
+            return parseFloat((parseFloat(currentPrice) + parseFloat(getRandomPriceChange())).toFixed(4));
         }
 
-        async function predictAndShowChart() {
-            const currencyPair = document.getElementById("currency-pair").value;
-            const timeFrame = document.getElementById("time-frame").value;
-            const timeZone = document.getElementById("time-zone").value; // Get selected time zone
-
-            // Mapping assets (currencies, crypto, commodities) to TradingView symbols
-            const symbolMap = {
-                "USD/EUR": "FX:EURUSD",
-                "USD/INR": "FX_IDC:USDINR",
-                "USD/PKR": "OANDA:USD_PKR",
-                "GBP/USD": "FX:GBPUSD",
-                "BTC/USD": "BITSTAMP:BTCUSD",  // Bitcoin symbol
-                "XAU/USD": "OANDA:XAUUSD",     // Gold symbol
-                "AUD/USD": "FX:AUDUSD",        // Australian Dollar
-                "NZD/USD": "FX:NZDUSD",        // New Zealand Dollar
-                "USD/CAD": "FX:USDCAD",        // Canadian Dollar
-                "USD/JPY": "FX:USDJPY"         // Japanese Yen
-            };
-
-            const tradingViewSymbol = symbolMap[currencyPair] || "FX:EURUSD"; // Default to EUR/USD if no match
-            let interval = "1"; // Default to 1 minute
-
-            // Map the selected timeframe to TradingView's interval format
+        function predictNextCandle(timeFrame, currentPrice) {
+            const randomDirection = Math.random() > 0.5 ? 'up' : 'down'; // Random prediction
+            let timeFrameText = '';
             switch (timeFrame) {
-                case "1m": interval = "1"; break;
-                case "5m": interval = "5"; break;
-                case "15m": interval = "15"; break;
-                case "1h": interval = "60"; break;
-                case "4h": interval = "240"; break;
-                case "1d": interval = "D"; break;
-                default: interval = "1"; // Fallback to 1 minute
+                case "1m": timeFrameText = "1 minute"; break;
+                case "5m": timeFrameText = "5 minutes"; break;
+                case "15m": timeFrameText = "15 minutes"; break;
+                case "1h": timeFrameText = "1 hour"; break;
+                case "4h": timeFrameText = "4 hours"; break;
+                case "1d": timeFrameText = "1 day"; break;
+                default: timeFrameText = "unknown"; break;
             }
+            return `Prediction: The next candle in ${timeFrameText} will close ${randomDirection} from the price of ${currentPrice}`;
+        }
 
-            // Load the TradingView widget to display live chart with selected time zone
-            new TradingView.widget({
-                "width": "100%",
-                "height": 500,
-                "symbol": tradingViewSymbol,
-                "interval": interval,
-                "timezone": timeZone, // Apply selected time zone
-                "theme": "light",
-                "style": "1",
-                "locale": "en",
-                "toolbar_bg": "#f1f3f6",
-                "enable_publishing": false,
-                "allow_symbol_change": true,
-                "container_id": "tradingview_chart"
-            });
+        function displayPatterns(prediction) {
+            const patternsElement = document.getElementById('patterns');
+            patternsElement.innerHTML = `<p>${prediction}</p>`;
+        }
 
-            // Simulate data for candlestick pattern detection
-            const simulatedCandlestickData = [
-                { time: Date.now(), open: 1.158, high: 1.159, low: 1.156, close: 1.157 },
-                { time: Date.now() + 60000, open: 1.157, high: 1.160, low: 1.155, close: 1.159 },
-                { time: Date.now() + 120000, open: 1.159, high: 1.162, low: 1.158, close: 1.160 },
-                { time: Date.now() + 180000, open: 1.160, high: 1.165, low: 1.158, close: 1.164 },
-                { time: Date.now() + 240000, open: 1.164, high: 1.166, low: 1.160, close: 1.161 },
-                { time: Date.now() + 300000, open: 1.161, high: 1.163, low: 1.159, close: 1.160 }, // Bearish Engulfing
-                { time: Date.now() + 360000, open: 1.160, high: 1.164, low: 1.158, close: 1.163 }, // Bullish Engulfing
-            ];
+        function updateLivePrice(price) {
+            const livePriceElement = document.getElementById('live-price');
+            livePriceElement.innerHTML = `Live Price: ${price}`;
+        }
 
-            // Detect candlestick patterns
-            const patterns = detectPatterns(simulatedCandlestickData);
+        function predictAndShowPrice() {
+            const timeZone = document.getElementById("time-zone").value;
+            const timeFrame = document.getElementById("time-frame").value;
 
-            // Update the last close price for prediction
-            lastClosePrice = simulatedCandlestickData[simulatedCandlestickData.length - 1].close;
+            // Start the clock with the selected time zone
+            startClock(timeZone);
 
-            // Display detected patterns and predictions
-            displayPatterns(patterns);
+            // Simulate the initial live price
+            let currentPrice = 1.1580; // Simulated initial price
 
-            // Set auto-refresh to check for patterns every minute
-            setTimeout(predictAndShowChart, refreshInterval);
+            // Update live price at regular intervals and show prediction
+            setInterval(() => {
+                currentPrice = simulateLivePrice(currentPrice);
+                updateLivePrice(currentPrice);
+
+                // Predict next candle based on time frame
+                const prediction = predictNextCandle(timeFrame, currentPrice);
+                displayPatterns(prediction);
+            }, refreshInterval);
         }
     </script>
 </body>
