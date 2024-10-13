@@ -41,6 +41,11 @@
         .btn:hover {
             background-color: #0056b3;
         }
+        iframe {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -73,22 +78,58 @@
 
         <!-- Predict Button -->
         <div class="form-group">
-            <button class="btn" onclick="predictMovement()">Predict Next Move</button>
+            <button class="btn" onclick="predictAndShowChart()">Predict & Show Chart</button>
         </div>
 
         <!-- Placeholder for Prediction -->
         <div id="prediction-result" style="text-align:center; font-size: 1.5rem;"></div>
+
+        <!-- TradingView Chart -->
+        <div id="chart-container">
+            <iframe id="tradingview-widget" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
     </div>
 
     <script>
-        function predictMovement() {
+        function getTradingViewUrl(symbol, interval) {
+            // Generate the TradingView widget URL with dynamic currency pair and timeframe
+            return `https://s.tradingview.com/widgetembed/?symbol=${symbol}&interval=${interval}&theme=light&style=1&locale=en&toolbar_bg=%23f1f3f6&hide_side_toolbar=false&allow_symbol_change=true&save_image=true&studies=[]&show_popup_button=true&popup_width=600&popup_height=400`;
+        }
+
+        function predictAndShowChart() {
             const currencyPair = document.getElementById("currency-pair").value;
             const timeFrame = document.getElementById("time-frame").value;
 
-            // Placeholder logic for prediction, just showing random movement for now
+            // Placeholder prediction logic, just random move
             const prediction = Math.random() > 0.5 ? 'Green (Up)' : 'Red (Down)';
             const resultElement = document.getElementById("prediction-result");
             resultElement.textContent = `Predicted Movement for ${currencyPair} on ${timeFrame} time frame: ${prediction}`;
+
+            // Mapping currency pairs to TradingView symbols (you can adjust based on your requirements)
+            const symbolMap = {
+                "USD/EUR": "FX:EURUSD",
+                "USD/INR": "FX_IDC:USDINR",
+                "USD/PKR": "OANDA:USD_PKR",
+                "GBP/USD": "FX:GBPUSD"
+            };
+
+            const tradingViewSymbol = symbolMap[currencyPair] || "FX:EURUSD"; // Default to EUR/USD if no match
+            let interval = "1"; // Default interval (1 minute)
+
+            // Map the selected timeframe to TradingView's interval format
+            switch (timeFrame) {
+                case "1m": interval = "1"; break;
+                case "5m": interval = "5"; break;
+                case "15m": interval = "15"; break;
+                case "1h": interval = "60"; break;
+                case "4h": interval = "240"; break;
+                case "1d": interval = "D"; break;
+                default: interval = "1"; // Fallback to 1 minute
+            }
+
+            // Update the TradingView widget with the selected currency pair and time frame
+            const tradingViewWidget = document.getElementById("tradingview-widget");
+            tradingViewWidget.src = getTradingViewUrl(tradingViewSymbol, interval);
         }
     </script>
 </body>
