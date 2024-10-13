@@ -59,6 +59,10 @@
             font-size: 1.5rem;
             text-align: center;
         }
+        .loading {
+            font-size: 1.2rem;
+            color: grey;
+        }
         .green-text {
             color: green;
             font-weight: bold;
@@ -160,7 +164,8 @@
             </div>
 
             <!-- Live Market Price -->
-            <div id="live-price" class="price-display">Live Price: Loading...</div>
+            <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
+            <div id="loading-indicator" class="loading"></div>
 
             <!-- Clock Display Based on Selected UTC Time -->
             <div id="clock" class="clock-display">Clock: --:--</div>
@@ -192,6 +197,7 @@
         let correctPredictions = 0;
         let totalPredictions = 0;
         let refreshInterval = 60000; // Default to 1 minute
+        let priceCache = {}; // Store previous prices for faster loading
         const API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY'; // Replace with your Alpha Vantage API key
         const predictions = []; // To store predictions for the last 24 hours
 
@@ -232,12 +238,22 @@
 
         // Fetch real-time price from Alpha Vantage
         async function fetchRealTimePrice(symbol) {
+            // Check if price is already cached
+            if (priceCache[symbol]) {
+                return priceCache[symbol];
+            }
+
             try {
+                document.getElementById('loading-indicator').innerHTML = "Fetching live price...";
                 const response = await fetch(`https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${symbol.split('/')[0]}&to_currency=${symbol.split('/')[1]}&apikey=${API_KEY}`);
                 const data = await response.json();
-                return parseFloat(data['Realtime Currency Exchange Rate']['5. Exchange Rate']).toFixed(4);
+                const price = parseFloat(data['Realtime Currency Exchange Rate']['5. Exchange Rate']).toFixed(4);
+                priceCache[symbol] = price; // Cache the fetched price
+                document.getElementById('loading-indicator').innerHTML = ""; // Clear loading indicator
+                return price;
             } catch (error) {
                 console.error('Error fetching price:', error);
+                document.getElementById('loading-indicator').innerHTML = "Error fetching price.";
                 return 'Error';
             }
         }
@@ -305,9 +321,10 @@
             // Start the clock with the selected time zone
             startClock(timeZone);
 
-            // Fetch and show the live price immediately
+            // Fetch and show the live price immediately, display last known price if available
+            document.getElementById('price-value').innerHTML = priceCache[currencyPair] || 'Loading...'; // Show last known price
             const currentPrice = await fetchRealTimePrice(currencyPair);
-            updateLivePrice(currentPrice);
+            document.getElementById('price-value').innerHTML = currentPrice;
 
             // Display detected candlestick patterns on the left
             displayDetectedPatterns();
@@ -319,7 +336,7 @@
             // Continue updating live price and prediction at regular intervals
             setInterval(async () => {
                 const updatedPrice = await fetchRealTimePrice(currencyPair);
-                updateLivePrice(updatedPrice);
+                document.getElementById('price-value').innerHTML = updatedPrice;
 
                 // Update prediction for the next candle
                 lastPrediction = prediction;
