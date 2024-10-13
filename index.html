@@ -6,295 +6,69 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>1-Minute Candle Prediction System</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 20px;
-            display: flex;
-        }
-        .sidebar {
-            width: 300px;
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .content {
-            flex-grow: 1;
-            margin-left: 20px;
-        }
-        h1, h3 {
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            font-weight: bold;
-        }
-        select, input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            text-align: center;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-        }
-        .price-display, .clock-display, .prediction-result {
-            margin-top: 20px;
-            font-size: 1.5rem;
-            text-align: center;
-        }
-        .loading {
-            font-size: 1.2rem;
-            color: grey;
-        }
-        .green-text {
-            color: green;
-            font-weight: bold;
-        }
-        .red-text {
-            color: red;
-            font-weight: bold;
-        }
-        .pattern-list, .prediction-table {
-            list-style: none;
-            padding: 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
+        /* Add your styles here */
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Sidebar for Candlestick Patterns -->
-        <div class="sidebar">
-            <h3>Candlestick Patterns</h3>
-            <table id="candlestick-patterns-table">
-                <thead>
-                    <tr>
-                        <th>Pair</th>
-                        <th>Pattern</th>
-                        <th>Time</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="pattern-list">
-                    <!-- Detected patterns will be shown here -->
-                </tbody>
-            </table>
+        <!-- Your form and elements as before -->
+        <h1>1-Minute Candle Prediction</h1>
+        <div class="form-group">
+            <label for="currency-pair">Select Asset</label>
+            <select id="currency-pair">
+                <option value="EURUSD">EUR/USD</option>
+                <option value="GBPUSD">GBP/USD</option>
+                <option value="USDJPY">USD/JPY</option>
+                <option value="USDCAD">USD/CAD</option>
+            </select>
         </div>
-
-        <!-- Main content area -->
-        <div class="content">
-            <h1>1-Minute Candle Prediction</h1>
-
-            <!-- Currency Pair Selection -->
-            <div class="form-group">
-                <label for="currency-pair">Select Asset</label>
-                <select id="currency-pair">
-                    <option value="EURUSD">EUR/USD</option>
-                    <option value="GBPUSD">GBP/USD</option>
-                    <option value="USDJPY">USD/JPY</option>
-                    <option value="USDCAD">USD/CAD</option>
-                </select>
-            </div>
-
-            <!-- Time Frame Selection -->
-            <div class="form-group">
-                <label for="time-frame">Select Time Frame</label>
-                <select id="time-frame">
-                    <option value="1m">1 Minute</option>
-                </select>
-            </div>
-
-            <!-- Time Zone Selection -->
-            <div class="form-group">
-                <label for="time-zone">Select Time Zone</label>
-                <select id="time-zone">
-                    <option value="Etc/UTC">UTC</option>
-                    <option value="Asia/Kolkata">India (UTC+5:30)</option>
-                    <option value="Asia/Karachi">Pakistan (UTC+5:00)</option>
-                    <option value="Asia/Dhaka">Bangladesh (UTC+6:00)</option>
-                </select>
-            </div>
-
-            <!-- Predict Button -->
-            <div class="form-group">
-                <button class="btn" onclick="predictAndShowPrice()">Predict & Show Live Price</button>
-            </div>
-
-            <!-- Live Market Price -->
-            <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
-            <div id="loading-indicator" class="loading"></div>
-
-            <!-- Clock Display Based on Selected UTC Time -->
-            <div id="clock" class="clock-display">Clock: --:--</div>
-
-            <!-- Placeholder for Pattern Detection and Prediction -->
-            <div id="patterns" class="prediction-result"></div>
-
-            <!-- Prediction Table -->
-            <h3>Prediction History (Last 24 Hours)</h3>
-            <table id="prediction-history-table">
-                <thead>
-                    <tr>
-                        <th>Pair</th>
-                        <th>Opening Time</th>
-                        <th>Prediction Price</th>
-                        <th>Closing Time</th>
-                        <th>Closing Price</th>
-                        <th>Result</th>
-                    </tr>
-                </thead>
-                <tbody id="prediction-table">
-                    <!-- Prediction history will be populated here -->
-                </tbody>
-            </table>
+        <div class="form-group">
+            <button class="btn" onclick="predictAndShowPrice()">Predict & Show Live Price</button>
         </div>
+        <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
+        <div id="patterns" class="prediction-result"></div>
+        <table id="prediction-table">
+            <!-- Prediction table will be dynamically updated here -->
+        </table>
     </div>
 
+    <!-- Load MetaApi SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/metaapi.cloud-sdk@7.3.2/lib/metaapi.min.js"></script>
+
     <script>
-        // MetaApi token and account setup
-        const MetaApi = require('metaapi.cloud-sdk').default;
-        const api = new MetaApi('eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIzNjc3YjViYjVkMzU2MTk1ZGM5ZGE2MDk0YjUxYzkzYiIsInBlcm1pc3Npb25zIjpbXSwiYWNjZXNzUnVsZXMiOlt7ImlkIjoidHJhZGluZy1hY2NvdW50LW1hbmFnZW1lbnQtYXBpIiwibWV0aG9kcyI6WyJ0cmFkaW5nLWFjY291bnQtbWFuYWdlbWVudC1hcGk6cmVzdDpwdWJsaWM6KjoqIl0sInJvbGVzIjpbInJlYWRlciJdLCJyZXNvdXJjZXMiOlsiYWNjb3VudDokVVNFUl9JRCQ6OWU3N2U5MzgtMzNmMS00NTlhLTgzMWUtMTk2N2NkZDZjNWViIl19LHsiaWQiOiJtZXRhYXBpLXJlc3QtYXBpIiwibWV0aG9kcyI6WyJtZXRhYXBpLWFwaTpyZXN0OnB1YmxpYzoqOioiXSwicm9sZXMiOlsicmVhZGVyIiwid3JpdGVyIl0sInJlc291cmNlcyI6WyJhY2NvdW50OiRVU0VSX0lEJDo5ZTc3ZTkzOC0zM2YxLTQ1OWEtODMxZS0xOTY3Y2RkNmM1ZWIiXX0seyJpZCI6Im1ldGFhcGktcnBjLWFwaSIsIm1ldGhvZHMiOlsibWV0YWFwaS1hcGk6d3M6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbImFjY291bnQ6JFVTRVJfSUQkOjllNzdlOTM4LTMzZjEtNDU5YS04MzFlLTE5NjdjZGQ2YzVlYiJdfSx7ImlkIjoibWV0YWFwaS1yZWFsLXRpbWUtc3RyZWFtaW5nLWFwaSIsIm1ldGhvZHMiOlsibWV0YWFwaS1hcGk6d3M6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbImFjY291bnQ6JFVTRVJfSUQkOjllNzdlOTM4LTMzZjEtNDU5YS04MzFlLTE5NjdjZGQ2YzVlYiJdfSx7ImlkIjoibWV0YXN0YXRzLWFwaSIsIm1ldGhvZHMiOlsibWV0YXN0YXRzLWFwaTpyZXN0OnB1YmxpYzoqOioiXSwicm9sZXMiOlsicmVhZGVyIl0sInJlc291cmNlcyI6WyJhY2NvdW50OiRVU0VSX0lEJDo5ZTc3ZTkzOC0zM2YxLTQ1OWEtODMxZS0xOTY3Y2RkNmM1ZWIiXX0seyJpZCI6InJpc2stbWFuYWdlbWVudC1hcGkiLCJtZXRob2RzIjpbInJpc2stbWFuYWdlbWVudC1hcGk6cmVzdDpwdWJsaWM6KjoqIl0sInJvbGVzIjpbInJlYWRlciJdLCJyZXNvdXJjZXMiOlsiYWNjb3VudDokVVNFUl9JRCQ6OWU3N2U5MzgtMzNmMS00NTlhLTgzMWUtMTk2N2NkZDZjNWViIl19XSwidG9rZW5JZCI6IjIwMjEwMjEzIiwiaW1wZXJzb25hdGVkIjpmYWxzZSwicmVhbFVzZXJJZCI6IjM2NzdiNWJiNWQzNTYxOTVkYzlkYTYwOTRiNTFjOTNiIiwiaWF0IjoxNzI4ODI2MjY5LCJleHAiOjE3MzY2MDIyNjl9.FY2PzdibvKwJuZuhPFsYNVFDEtrwuAi5QuLmTrrMStRtABRUvopPWBHwPeKjw1Uhu2z-lQBMi40nT_9IZqkoUqrTBRx9Txfk-rCZ8TvIu1313PW57ls6AFgK9QV6Sl1-woWcolXmSEDOtKjlKIlzmmOtG-8ZtBAu0LidxFOgHQ8ubH9BDpVg_DQ0wmS0gi0LdSKitt0wam0dFa0aEoEm-sEM6INk-cksVceVj0uwQI9R0jhqSCxVJWHWUtcUq5TByWUApPM9YT-K0InDbCWx9hRfR38PAmWyB6EC15PynD5DuEyUfl7arA5g2fkRacGdWWJKHQ-NVMBkRoOHCBfjYNfDOkaGCdtVNsWIJdtvpdOTAasB19eb71sn6js4kbV51z1ar3gROsbFT-ax4BlVAtlv8Hn_813z6It8w7hoA5vVLYbsDhJRalk_h17WqX6zKkmAi63S7fCm7_HoEpZ8y2OOuhoPAqFVnza-EluHMAqd93qSOJPUh0WpQo38Razwo1zJMwD0H4GGHZU6ldYdkwDS7l8Wv9nSyyBMULiG-9tDQUEW8-s0imNnt131HMiPMXfHRYJCU8OGdzB7ds-nlImqBvE05QzdPIkNiUBSePIOgDVZaNoYYY2Qth9N8NvV8bKpxEo3BV4coY-5gogFWlGWRWCXE2Ss0lhp6wJeeKI'); // Replace with your MetaApi token
-        const accountId = '9e77e938-33f1-459a-831e-1967cdd6c5eb'; // Replace with your MetaApi account ID
+        // Use the MetaApi token and account ID
+        const api = new MetaApi('eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIzNjc3YjViYjVkMzU2MTk1ZGM5ZGE2MDk0YjUxYzkzYiIsInBlcm1pc3Npb25zIjpbXSwiYWNjZXNzUnVsZXMiOlt7ImlkIjoidHJhZGluZy1hY2NvdW50LW1hbmFnZW1lbnQtYXBpIiwibWV0aG9kcyI6WyJ0cmFkaW5nLWFjY291bnQtbWFuYWdlbWVudC1hcGk6cmVzdDpwdWJsaWM6KjoqIl0sInJvbGVzIjpbInJlYWRlciJdLCJyZXNvdXJjZXMiOlsiYWNjb3VudDokVVNFUl9JRCQ6OWU3N2U5MzgtMzNmMS00NTlhLTgzMWUtMTk2N2NkZDZjNWViIl19LHsiaWQiOiJtZXRhYXBpLXJlc3QtYXBpIiwibWV0aG9kcyI6WyJtZXRhYXBpLWFwaTpyZXN0OnB1YmxpYzoqOioiXSwicm9sZXMiOlsicmVhZGVyIiwid3JpdGVyIl0sInJlc291cmNlcyI6WyJhY2NvdW50OiRVU0VSX0lEJDo5ZTc3ZTkzOC0zM2YxLTQ1OWEtODMxZS0xOTY3Y2RkNmM1ZWIiXX0seyJpZCI6Im1ldGFhcGktcnBjLWFwaSIsIm1ldGhvZHMiOlsibWV0YWFwaS1hcGk6d3M6cHVibGljOio6KiJdLCJyb2xlcyI6WyJyZWFkZXIiLCJ3cml0ZXIiXSwicmVzb3VyY2VzIjpbImFjY291bnQ6JFVTRVJfSUQkOjllNzdlOTM4LTMzZjEtNDU5YS04MzFlLTE5NjdjZGQ2YzVlYiJdfSx7ImlkIjoibWV0YXN0YXRzLWFwaSIsIm1ldGhvZHMiOlsibWV0YXN0YXRzLWFwaTpyZXN0OnB1YmxpYzoqOioiXSwicm9sZXMiOlsicmVhZGVyIl0sInJlc291cmNlcyI6WyJhY2NvdW50OiRVU0VSX0lEJDo5ZTc3ZTkzOC0zM2YxLTQ1OWEtODMxZS0xOTY3Y2RkNmM1ZWIiXX1dfQ.FY2PzdibvKwJuZuhPFsYNVFDEtrwuAi5QuLmTrrMStRtABRUvopPWBHwPeKjw1Uhu2z-lQBMi40nT_9IZqkoUqrTBRx9Txfk-rCZ8TvIu1313PW57ls6AFgK9QV6Sl1-woWcolXmSEDOtKjlKIlzmmOtG-8ZtBAu0LidxFOgHQ8ubH9BDpVg_DQ0wmS0gi0LdSKitt0wam0dFa0aEoEm-sEM6INk-cksVceVj0uwQI9R0jhqSCxVJWHWUtcUq5TByWUApPM9YT-K0InDbCWx9hRfR38PAmWyB6EC15PynD5DuEyUfl7arA5g2fkRacGdWWJKHQ-NVMBkRoOHCBfjYNfDOkaGCdtVNsWIJdtvpdOTAasB19eb71sn6js4kbV51z1ar3gROsbFT-ax4BlVAtlv8Hn_813z6It8w7hoA5vVLYbsDhJRalk_h17WqX6zKkmAi63S7fCm7_HoEpZ8y2OOuhoPAqFVnza-EluHMAqd93qSOJPUh0WpQo38Razwo1zJMwD0H4GGHZU6ldYdkwDS7l8Wv9nSyyBMULiG-9tDQUEW8-s0imNnt131HMiPMXfHRYJCU8OGdzB7ds-nlImqBvE05QzdPIkNiUBSePIOgDVZaNoYYY2Qth9N8NvV8bKpxEo3BV4coY-5gogFWlGWRWCXE2Ss0lhp6wJeeKI');
 
-        let lastPrediction = null;
-        let refreshInterval = 60000; // Default to 1 minute
+        const accountId = '9e77e938-33f1-459a-831e-1967cdd6c5eb';
 
-        // Function to fetch live price from MetaApi
+        // Function to fetch price
         async function fetchRealTimePrice(symbol) {
             try {
-                document.getElementById('loading-indicator').innerHTML = "Fetching live price...";
                 const account = await api.metatraderAccountApi.getAccount(accountId);
-
-                // Connect to MetaTrader account if not already connected
                 if (!account.connected) {
                     await account.connect();
                     console.log('Connected to MetaApi account.');
                 }
 
-                // Fetch live price for the given symbol
                 const priceData = await account.getSymbolPrice(symbol);
-                const price = priceData.bid;  // Use the bid price for the current price
-                document.getElementById('loading-indicator').innerHTML = ""; // Clear loading indicator
-                return price;
+                return priceData.bid;
             } catch (error) {
                 console.error('Error fetching price:', error);
-                document.getElementById('loading-indicator').innerHTML = "Error fetching price.";
                 return 'Error';
             }
         }
 
-        // Display clock based on selected time zone
-        function startClock(timeZone) {
-            const clockElement = document.getElementById('clock');
-            setInterval(() => {
-                const now = new Date();
-                const time = now.toLocaleTimeString('en-US', { timeZone: timeZone, hour12: true });
-                clockElement.innerHTML = `Clock (${timeZone}): ${time}`;
-            }, 1000); // Update every second
-        }
-
-        // Predict next candle
-        function predictNextCandle(timeFrame, currentPrice, currencyPair) {
-            let randomDirection = Math.random() > 0.5 ? 'up' : 'down';
-            const nextCandleColor = randomDirection === 'up' ? `<span class="green-text">Green</span>` : `<span class="red-text">Red</span>`;
-            const now = new Date();
-            const nextCandleTime = new Date(now.getTime() + getTimeFrameMillis(timeFrame)).toLocaleTimeString();
-            return {
-                message: `The Next Candle will be ${nextCandleColor} for ${currencyPair} from Current Price <strong>${currentPrice}</strong> closing at ${nextCandleTime}`,
-                direction: randomDirection,
-                pair: currencyPair,
-                predictedPrice: currentPrice,
-                openingTime: now.toLocaleTimeString(),
-                closingTime: nextCandleTime
-            };
-        }
-
-        // Evaluate prediction after candle closes
-        async function evaluatePrediction(prediction) {
-            const currentPrice = await fetchRealTimePrice(prediction.pair);
-            const result = currentPrice > prediction.predictedPrice && prediction.direction === 'up'
-                            || currentPrice < prediction.predictedPrice && prediction.direction === 'down'
-                            ? 'Correct' : 'Wrong';
-
-            // Display prediction and update prediction history table
-            const predictionTableBody = document.getElementById('prediction-table');
-            const row = `<tr>
-                <td>${prediction.pair}</td>
-                <td>${prediction.openingTime}</td>
-                <td>${prediction.predictedPrice}</td>
-                <td>${prediction.closingTime}</td>
-                <td>${currentPrice}</td>
-                <td>${result}</td>
-            </tr>`;
-            predictionTableBody.innerHTML = row + predictionTableBody.innerHTML; // Insert latest prediction at the top
-
-            if (result === 'Wrong') {
-                // Learning mechanism: flip the direction if prediction was wrong
-                prediction.direction = prediction.direction === 'up' ? 'down' : 'up';
-            }
-        }
-
-        // Helper function to get time frame in milliseconds
-        function getTimeFrameMillis(timeFrame) {
-            switch (timeFrame) {
-                case '1m': return 60000; // 1 minute in milliseconds
-                default: return 60000; // Default to 1 minute
-            }
-        }
-
-        // Main function to fetch price and make prediction
+        // Main function to fetch price and show predictions
         async function predictAndShowPrice() {
             const currencyPair = document.getElementById("currency-pair").value;
-            const timeZone = document.getElementById("time-zone").value;
-            const timeFrame = document.getElementById("time-frame").value;
-
-            // Start the clock with the selected time zone
-            startClock(timeZone);
-
-            // Fetch and show the live price immediately
             const currentPrice = await fetchRealTimePrice(currencyPair);
             document.getElementById('price-value').innerHTML = currentPrice;
 
-            // Predict the next candle immediately
-            let prediction = predictNextCandle(timeFrame, currentPrice, currencyPair);
-            document.getElementById('patterns').innerHTML = prediction.message;
-
-            // Schedule the evaluation after the candle closes
-            setTimeout(() => {
-                evaluatePrediction(prediction);
-            }, refreshInterval);
+            // Create a simple prediction message (you can expand this logic)
+            const prediction = Math.random() > 0.5 ? 'Green' : 'Red';
+            const nextCandle = `The next candle will be ${prediction}.`;
+            document.getElementById('patterns').innerHTML = nextCandle;
         }
     </script>
 </body>
