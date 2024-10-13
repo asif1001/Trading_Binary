@@ -121,16 +121,9 @@
             <div class="form-group">
                 <label for="currency-pair">Select Asset</label>
                 <select id="currency-pair">
-                    <option value="EUR/USD">EUR/USD</option>
-                    <option value="INR/USD">INR/USD</option>
-                    <option value="PKR/USD">PKR/USD</option>
-                    <option value="GBP/USD">GBP/USD</option>
-                    <option value="BTC/USD">BTC/USD</option>
-                    <option value="XAU/USD">XAU/USD (Gold)</option>
-                    <option value="AUD/USD">AUD/USD</option>
-                    <option value="NZD/USD">NZD/USD</option>
-                    <option value="USD/CAD">USD/CAD</option>
-                    <option value="USD/JPY">USD/JPY</option>
+                    <option value="bitcoin">BTC/USD</option>
+                    <option value="ethereum">ETH/USD</option>
+                    <option value="litecoin">LTC/USD</option>
                 </select>
             </div>
 
@@ -139,9 +132,6 @@
                 <label for="time-frame">Select Time Frame</label>
                 <select id="time-frame">
                     <option value="1m">1 Minute</option>
-                    <option value="5m">5 Minutes</option>
-                    <option value="15m">15 Minutes</option>
-                    <option value="1h">1 Hour</option>
                 </select>
             </div>
 
@@ -198,15 +188,15 @@
         let totalPredictions = 0;
         let refreshInterval = 60000; // Default to 1 minute
         let priceCache = {}; // Store previous prices for faster loading
-        const API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY'; // Replace with your Alpha Vantage API key
-        const predictions = []; // To store predictions for the last 24 hours
+
+        // Use CoinGecko API for fetching cryptocurrency prices
+        const COINGECKO_API = 'https://api.coingecko.com/api/v3/simple/price';
 
         // List of detected patterns for multiple currency pairs (simulation)
         const detectedPatterns = {
-            "EUR/USD": { pattern: "Bullish Engulfing", time: "10:30" },
-            "INR/USD": { pattern: "Bearish Engulfing", time: "10:35" },
-            "BTC/USD": { pattern: "Doji", time: "10:40" },
-            "GBP/USD": { pattern: "Hammer", time: "10:45" },
+            "BTC/USD": { pattern: "Bullish Engulfing", time: "10:30" },
+            "ETH/USD": { pattern: "Bearish Engulfing", time: "10:35" },
+            "LTC/USD": { pattern: "Doji", time: "10:40" },
         };
 
         // Show detected patterns on the left sidebar
@@ -236,13 +226,14 @@
             }, 1000); // Update every second
         }
 
-        // Fetch real-time price from Alpha Vantage
+        // Fetch real-time cryptocurrency price from CoinGecko
         async function fetchRealTimePrice(symbol) {
+            const currency = "usd";
             try {
                 document.getElementById('loading-indicator').innerHTML = "Fetching live price...";
-                const response = await fetch(`https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${symbol.split('/')[0]}&to_currency=${symbol.split('/')[1]}&apikey=${API_KEY}`);
+                const response = await fetch(`${COINGECKO_API}?ids=${symbol}&vs_currencies=${currency}`);
                 const data = await response.json();
-                const price = parseFloat(data['Realtime Currency Exchange Rate']['5. Exchange Rate']).toFixed(4);
+                const price = parseFloat(data[symbol][currency]).toFixed(4);
                 document.getElementById('loading-indicator').innerHTML = ""; // Clear loading indicator
                 return price;
             } catch (error) {
@@ -303,9 +294,6 @@
         function getTimeFrameMillis(timeFrame) {
             switch (timeFrame) {
                 case '1m': return 60000; // 1 minute in milliseconds
-                case '5m': return 300000; // 5 minutes in milliseconds
-                case '15m': return 900000; // 15 minutes in milliseconds
-                case '1h': return 3600000; // 1 hour in milliseconds
                 default: return 60000; // Default to 1 minute
             }
         }
