@@ -13,12 +13,12 @@
             justify-content: center;
         }
         .container {
-            max-width: 700px;
+            max-width: 900px;
             margin: 0 20px;
             display: flex;
         }
         .sidebar {
-            width: 200px;
+            width: 300px;
             background-color: #f4f4f4;
             padding: 10px;
             border-radius: 5px;
@@ -27,7 +27,7 @@
             flex-grow: 1;
             margin-left: 20px;
         }
-        h1 {
+        h1, h3 {
             text-align: center;
         }
         .form-group {
@@ -67,19 +67,24 @@
             color: red;
             font-weight: bold;
         }
-        .pattern-list {
+        .pattern-list, .prediction-table {
             list-style: none;
             padding: 0;
         }
-        .pattern-list li {
-            margin-bottom: 10px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
         }
-        .pattern-list li span {
-            font-weight: bold;
+        table, th, td {
+            border: 1px solid black;
         }
-        .stats {
-            margin-top: 20px;
+        th, td {
+            padding: 10px;
             text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
@@ -89,9 +94,19 @@
         <!-- Sidebar for Candlestick Patterns -->
         <div class="sidebar">
             <h3>Candlestick Patterns</h3>
-            <ul class="pattern-list" id="pattern-list">
-                <!-- Detected patterns will be shown here -->
-            </ul>
+            <table id="candlestick-patterns-table">
+                <thead>
+                    <tr>
+                        <th>Pair</th>
+                        <th>Pattern</th>
+                        <th>Time</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="pattern-list">
+                    <!-- Detected patterns will be shown here -->
+                </tbody>
+            </table>
         </div>
 
         <!-- Main content area -->
@@ -153,8 +168,21 @@
             <!-- Placeholder for Pattern Detection and Prediction -->
             <div id="patterns" class="prediction-result"></div>
 
-            <!-- Prediction Stats -->
-            <div id="prediction-stats" class="stats"></div>
+            <!-- Prediction Table -->
+            <h3>Prediction History (Last 24 Hours)</h3>
+            <table id="prediction-history-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Pair</th>
+                        <th>Direction</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="prediction-table">
+                    <!-- Prediction history will be populated here -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -165,6 +193,7 @@
         let totalPredictions = 0;
         let refreshInterval = 60000; // Default to 1 minute
         const API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY'; // Replace with your Alpha Vantage API key
+        const predictions = []; // To store predictions for the last 24 hours
 
         // List of detected patterns for multiple currency pairs (simulation)
         const detectedPatterns = {
@@ -176,11 +205,18 @@
 
         // Show detected patterns on the left sidebar
         function displayDetectedPatterns() {
-            const patternListElement = document.getElementById('pattern-list');
-            patternListElement.innerHTML = '';
+            const patternTableBody = document.getElementById('pattern-list');
+            patternTableBody.innerHTML = '';
             for (const [pair, pattern] of Object.entries(detectedPatterns)) {
-                const listItem = `<li>${pair}: <span>${pattern}</span></li>`;
-                patternListElement.innerHTML += listItem;
+                const time = new Date().toLocaleTimeString();
+                const action = pattern.includes("Bullish") ? "Buy" : "Sell";
+                const row = `<tr>
+                    <td>${pair}</td>
+                    <td>${pattern}</td>
+                    <td>${time}</td>
+                    <td>${action}</td>
+                </tr>`;
+                patternTableBody.innerHTML += row;
             }
         }
 
@@ -224,35 +260,25 @@
             };
         }
 
+        // Display prediction and update prediction history table
         function displayPrediction(prediction, previousPrediction) {
-            const patternsElement = document.getElementById('patterns');
-            let resultText = prediction.message;
+            const predictionTableBody = document.getElementById('prediction-table');
+            const now = new Date().toLocaleTimeString();
+            const row = `<tr>
+                <td>${now}</td>
+                <td>${prediction.pair}</td>
+                <td>${prediction.direction === 'up' ? 'Up' : 'Down'}</td>
+                <td>${previousPrediction ? previousPrediction.result : 'N/A'}</td>
+            </tr>`;
+            predictionTableBody.innerHTML += row;
 
-            if (previousPrediction) {
-                const actualDirection = prediction.direction === previousPrediction.direction ? "correct" : "wrong";
-
-                // Track prediction result
-                totalPredictions += 1;
-                if (actualDirection === "correct") {
-                    correctPredictions += 1;
-                }
-
-                resultText += `<br/><strong>Last Prediction was ${actualDirection}.</strong>`;
-                updateStats();
-            }
-
-            patternsElement.innerHTML = `<p>${resultText}</p>`;
-        }
-
-        function updateStats() {
-            const statsElement = document.getElementById('prediction-stats');
-            const accuracy = ((correctPredictions / totalPredictions) * 100).toFixed(2);
-            statsElement.innerHTML = `<p>Correct Predictions: ${correctPredictions}<br/>Wrong Predictions: ${totalPredictions - correctPredictions}<br/>Accuracy: ${accuracy}%</p>`;
-        }
-
-        function updateLivePrice(price) {
-            const livePriceElement = document.getElementById('live-price');
-            livePriceElement.innerHTML = `Live Price: ${price}`;
+            // Track prediction result for last 24 hours
+            predictions.push({
+                time: now,
+                pair: prediction.pair,
+                direction: prediction.direction,
+                result: previousPrediction ? previousPrediction.result : 'N/A'
+            });
         }
 
         // Helper function to get time frame in milliseconds
