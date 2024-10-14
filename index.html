@@ -77,9 +77,10 @@
             }
         }
 
-        // Function to convert UTC time to the user's local machine time
+        // Function to convert the datetime string (YYYY-MM-DD HH:mm:ss) to a valid Date object
         function convertToLocalTime(utcTime) {
-            const utcDate = new Date(utcTime.replace(' ', 'T') + 'Z');  // Convert UTC time to ISO format
+            const formattedTime = utcTime.replace(' ', 'T') + 'Z';  // Convert to ISO 8601 format by replacing space with T and adding Z
+            const utcDate = new Date(formattedTime);  // Create Date object in UTC
             return utcDate.toLocaleString();  // Convert to local machine time using user's local timezone
         }
 
