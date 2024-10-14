@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Historical Data Downloader (Bahrain Time)</title>
+    <title>Historical Data Downloader (Select Time Zone)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -38,14 +38,23 @@
 </head>
 <body>
 
-    <h1>Download Last 24 Hours of Historical Data (15-minute Intervals, Bahrain Time)</h1>
+    <h1>Download Last 24 Hours of Historical Data (15-minute Intervals)</h1>
+
+    <!-- Dropdown to select time zone -->
+    <label for="time-zone">Select Time Zone:</label>
+    <select id="time-zone">
+        <option value="Asia/Kuwait" selected>Kuwait (UTC+3)</option>
+        <option value="Asia/Kolkata">India (UTC+5:30)</option>
+        <option value="Asia/Karachi">Pakistan (UTC+5)</option>
+        <option value="Asia/Dhaka">Bangladesh (UTC+6)</option>
+    </select>
 
     <!-- Table to show the historical data -->
     <table id="data-table">
         <thead>
             <tr>
                 <th>Asset</th>
-                <th>Datetime (Bahrain Time)</th>
+                <th>Datetime (Local Time)</th>
                 <th>Open</th>
                 <th>High</th>
                 <th>Low</th>
@@ -58,7 +67,7 @@
     </table>
 
     <!-- Button to download the historical data -->
-    <a id="download-link" class="download-link" download="historical_data_15min_bahrain.csv" href="#">Download CSV</a>
+    <a id="download-link" class="download-link" download="historical_data_15min.csv" href="#">Download CSV</a>
 
     <script>
         const apiKey = '6ecda4d1ff2c4f0b91b7ddf7d7140721';  // Your Twelve Data API Key
@@ -77,18 +86,16 @@
             }
         }
 
-        // Function to convert UTC time to Bahrain time (UTC+3)
-        function convertToBahrainTime(utcTime) {
-            const utcDate = new Date(utcTime.replace(' ', 'T') + 'Z');  // Convert UTC time to a valid ISO string
-            const bahrainOffset = 3 * 60 * 60 * 1000;  // Bahrain is UTC+3 in milliseconds
-            const bahrainTime = new Date(utcDate.getTime() + bahrainOffset);  // Add the Bahrain offset
-            return bahrainTime.toLocaleString('en-GB', { timeZone: 'Asia/Bahrain', hour12: false });  // Format time
+        // Function to convert UTC time to the selected time zone
+        function convertToLocalTime(utcTime, timeZone) {
+            const utcDate = new Date(utcTime.replace(' ', 'T') + 'Z');  // Convert UTC time to ISO format
+            return utcDate.toLocaleString('en-GB', { timeZone: timeZone, hour12: false });  // Convert to selected time zone
         }
 
         // Function to convert the data to CSV format
         function convertToCSV(data) {
             const csvRows = [];
-            csvRows.push(['Asset', 'Datetime (Bahrain Time)', 'Open', 'High', 'Low', 'Close'].join(','));  // CSV header
+            csvRows.push(['Asset', 'Datetime (Local Time)', 'Open', 'High', 'Low', 'Close'].join(','));  // CSV header
 
             data.forEach(item => {
                 csvRows.push([item.symbol, item.datetime, item.open, item.high, item.low, item.close].join(','));
@@ -107,14 +114,14 @@
         }
 
         // Function to render the data in the table
-        function renderTable(data) {
+        function renderTable(data, timeZone) {
             const dataBody = document.getElementById('data-body');
             dataBody.innerHTML = '';  // Clear existing data
 
             data.forEach(item => {
                 const row = `<tr>
                     <td>${item.symbol}</td>
-                    <td>${convertToBahrainTime(item.datetime)}</td>
+                    <td>${convertToLocalTime(item.datetime, timeZone)}</td>
                     <td>${item.open}</td>
                     <td>${item.high}</td>
                     <td>${item.low}</td>
@@ -127,12 +134,13 @@
         // Main function to fetch data for all symbols and process it
         async function getAllHistoricalData() {
             let allData = [];
+            const timeZone = document.getElementById('time-zone').value;  // Get selected time zone
 
             for (const symbol of symbols) {
                 const data = await fetchHistoricalData(symbol);
                 const formattedData = data.map(item => ({
                     symbol: symbol,
-                    datetime: convertToBahrainTime(item.datetime),  // Convert UTC to Bahrain time
+                    datetime: convertToLocalTime(item.datetime, timeZone),  // Convert UTC to selected local time
                     open: item.open,
                     high: item.high,
                     low: item.low,
@@ -141,12 +149,15 @@
                 allData = allData.concat(formattedData);  // Add to the combined data
             }
 
-            renderTable(allData);  // Display data in the table
+            renderTable(allData, timeZone);  // Display data in the table
             downloadCSV(allData);  // Prepare CSV download link
         }
 
-        // Call the function to get data when the page loads
+        // Fetch data when the page loads
         getAllHistoricalData();
+
+        // Fetch new data whenever the time zone is changed
+        document.getElementById('time-zone').addEventListener('change', getAllHistoricalData);
     </script>
 </body>
 </html>
