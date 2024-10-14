@@ -4,207 +4,141 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Gold & BTC Prediction with MA Cross</title>
+    <title>Historical Data Downloader (15-minute Intervals)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            font-weight: bold;
-        }
-        select, input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            text-align: center;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-        }
-        .price-display, .clock-display, .prediction-result {
-            margin-top: 20px;
-            font-size: 1.5rem;
             text-align: center;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
         table, th, td {
             border: 1px solid black;
-        }
-        th, td {
-            padding: 10px;
+            padding: 8px;
             text-align: center;
         }
         th {
             background-color: #f2f2f2;
         }
+        .download-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Gold & Bitcoin Prediction with MA Cross</h1>
+    <h1>Download Last 24 Hours of Historical Data (15-minute Intervals)</h1>
 
-        <!-- Asset Selection -->
-        <div class="form-group">
-            <label for="asset-pair">Select Asset</label>
-            <select id="asset-pair">
-                <option value="XAU/USD">Gold (XAU/USD)</option>
-                <option value="BTC/USD">Bitcoin (BTC/USD)</option>
-            </select>
-        </div>
+    <!-- Table to show the historical data -->
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Asset</th>
+                <th>Datetime</th>
+                <th>Open</th>
+                <th>High</th>
+                <th>Low</th>
+                <th>Close</th>
+            </tr>
+        </thead>
+        <tbody id="data-body">
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
 
-        <!-- Time Frame Selection -->
-        <div class="form-group">
-            <label for="time-frame">Select Time Frame</label>
-            <select id="time-frame">
-                <option value="15min">15 Minutes</option>
-                <option value="30min">30 Minutes</option>
-                <option value="1h">1 Hour</option>
-                <option value="4h">4 Hours</option>
-            </select>
-        </div>
+    <!-- Button to download the historical data -->
+    <a id="download-link" class="download-link" download="historical_data_15min.csv" href="#">Download CSV</a>
 
-        <!-- Predict Button -->
-        <div class="form-group">
-            <button class="btn" onclick="predictAndShowPrice()">Predict & Show MA Cross</button>
-        </div>
-
-        <!-- Live Market Price -->
-        <div id="live-price" class="price-display">Live Price: <span id="price-value">Loading...</span></div>
-        <div id="loading-indicator" class="loading"></div>
-
-        <!-- Prediction Result with MA Cross Signal -->
-        <div id="patterns" class="prediction-result"></div>
-
-        <!-- Prediction Table -->
-        <h3>Prediction History</h3>
-        <table id="prediction-history-table">
-            <thead>
-                <tr>
-                    <th>Asset</th>
-                    <th>Time Frame</th>
-                    <th>Signal</th>
-                    <th>Current Price</th>
-                    <th>Fast MA (5)</th>
-                    <th>Slow MA (15)</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="prediction-table">
-                <!-- Prediction history will be populated here -->
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Custom Script -->
     <script>
-        const apiKey = '6ecda4d1ff2c4f0b91b7ddf7d7140721'; // Your Twelve Data API key
-        const twelveDataUrl = 'https://api.twelvedata.com/time_series';
+        const apiKey = '6ecda4d1ff2c4f0b91b7ddf7d7140721';  // Your Twelve Data API Key
+        const symbols = ['XAU/USD', 'BTC/USD', 'USD/JPY', 'USD/INR', 'EUR/USD'];  // List of assets
 
-        // Function to fetch historical data from Twelve Data
-        async function fetchHistoricalData(symbol, interval) {
-            try {
-                const response = await fetch(`${twelveDataUrl}?symbol=${symbol}&interval=${interval}&outputsize=50&apikey=${apiKey}`);
-                const data = await response.json();
-                
-                // Handle case where no data is returned or error occurs
-                if (!data.values || data.values.length === 0) {
-                    throw new Error('No data available for the selected asset or time frame.');
-                }
-                return data.values.map(value => parseFloat(value.close)); // Return close prices
-            } catch (error) {
-                console.error('Error fetching historical data:', error);
+        // Function to fetch historical data for the last 24 hours (15-minute intervals)
+        async function fetchHistoricalData(symbol) {
+            const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=15min&outputsize=96&apikey=${apiKey}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.values) {
+                return data.values;  // Return the 24 hours of data in 15-minute intervals
+            } else {
+                console.error(`Error fetching data for ${symbol}:`, data);
                 return [];
             }
         }
 
-        // Function to calculate moving average
-        function calculateMA(prices, period) {
-            let ma = [];
-            for (let i = period - 1; i < prices.length; i++) {
-                const slice = prices.slice(i - period + 1, i + 1);
-                const avg = slice.reduce((acc, val) => acc + val, 0) / period;
-                ma.push(avg.toFixed(2)); // Round to 2 decimal places
-            }
-            return ma;
+        // Function to convert the data to CSV format
+        function convertToCSV(data) {
+            const csvRows = [];
+            csvRows.push(['Asset', 'Datetime', 'Open', 'High', 'Low', 'Close'].join(','));  // CSV header
+
+            data.forEach(item => {
+                csvRows.push([item.symbol, item.datetime, item.open, item.high, item.low, item.close].join(','));
+            });
+
+            return csvRows.join('\n');
         }
 
-        // Function to check for MA crossover
-        function checkMACross(fastMA, slowMA) {
-            if (fastMA[fastMA.length - 1] > slowMA[slowMA.length - 1] && fastMA[fastMA.length - 2] < slowMA[slowMA.length - 2]) {
-                return 'Buy';
-            } else if (fastMA[fastMA.length - 1] < slowMA[slowMA.length - 1] && fastMA[fastMA.length - 2] > slowMA[slowMA.length - 2]) {
-                return 'Sell';
-            } else {
-                return 'No Signal';
-            }
+        // Function to create a CSV file and allow downloading
+        function downloadCSV(data) {
+            const csvContent = convertToCSV(data);
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.href = url;
         }
 
-        // Main function to fetch price, calculate MA, and show buy/sell signal
-        async function predictAndShowPrice() {
-            const assetPair = document.getElementById("asset-pair").value;
-            const timeFrame = document.getElementById("time-frame").value;
+        // Function to render the data in the table
+        function renderTable(data) {
+            const dataBody = document.getElementById('data-body');
+            dataBody.innerHTML = '';  // Clear existing data
 
-            // Fetch historical data for the selected asset and time frame
-            const prices = await fetchHistoricalData(assetPair, timeFrame);
-            
-            // Ensure we have enough data to calculate MAs (at least 15 data points)
-            if (prices.length < 15) {
-                alert('Not enough data to calculate moving averages.');
-                return;
+            data.forEach(item => {
+                const row = `<tr>
+                    <td>${item.symbol}</td>
+                    <td>${item.datetime}</td>
+                    <td>${item.open}</td>
+                    <td>${item.high}</td>
+                    <td>${item.low}</td>
+                    <td>${item.close}</td>
+                </tr>`;
+                dataBody.innerHTML += row;
+            });
+        }
+
+        // Main function to fetch data for all symbols and process it
+        async function getAllHistoricalData() {
+            let allData = [];
+
+            for (const symbol of symbols) {
+                const data = await fetchHistoricalData(symbol);
+                const formattedData = data.map(item => ({
+                    symbol: symbol,
+                    datetime: item.datetime,
+                    open: item.open,
+                    high: item.high,
+                    low: item.low,
+                    close: item.close
+                }));
+                allData = allData.concat(formattedData);  // Add to the combined data
             }
 
-            // Calculate 5-period (fast) and 15-period (slow) moving averages
-            const fastMA = calculateMA(prices, 5);
-            const slowMA = calculateMA(prices, 15);
-
-            // Check for MA cross (Buy/Sell signal)
-            const signal = checkMACross(fastMA, slowMA);
-            const currentPrice = prices[prices.length - 1];
-
-            // Show the signal in the prediction result section
-            const resultMessage = `Signal: ${signal}. Fast MA: ${fastMA[fastMA.length - 1]}, Slow MA: ${slowMA[slowMA.length - 1]}.`;
-            document.getElementById('patterns').innerHTML = resultMessage;
-
-            // Update prediction history table
-            const predictionTableBody = document.getElementById('prediction-table');
-            const row = `<tr>
-                <td>${assetPair}</td>
-                <td>${timeFrame}</td>
-                <td>${signal}</td>
-                <td>${currentPrice}</td>
-                <td>${fastMA[fastMA.length - 1]}</td>
-                <td>${slowMA[slowMA.length - 1]}</td>
-                <td>${signal === 'Buy' ? 'Go Long' : signal === 'Sell' ? 'Go Short' : 'Wait'}</td>
-            </tr>`;
-            predictionTableBody.innerHTML = row + predictionTableBody.innerHTML; // Insert latest prediction at the top
+            renderTable(allData);  // Display data in the table
+            downloadCSV(allData);  // Prepare CSV download link
         }
+
+        // Call the function to get data when the page loads
+        getAllHistoricalData();
     </script>
 </body>
 </html>
