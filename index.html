@@ -4,148 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Historical Data Downloader (Local Time)</title>
+    <title>Polygon.io Live Price Data</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
             text-align: center;
+            margin-top: 50px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .price {
+            font-size: 24px;
             margin-top: 20px;
-        }
-        table, th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .download-link {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <h1>Download Last 24 Hours of Historical Data (15-minute Intervals)</h1>
+    <h1>Live Price Data from Polygon.io</h1>
 
-    <!-- Table to show the historical data -->
-    <table id="data-table">
-        <thead>
-            <tr>
-                <th>Asset</th>
-                <th>Datetime (Local Time)</th>
-                <th>Open</th>
-                <th>High</th>
-                <th>Low</th>
-                <th>Close</th>
-            </tr>
-        </thead>
-        <tbody id="data-body">
-            <!-- Data will be inserted here -->
-        </tbody>
-    </table>
+    <div>
+        <h2>Cryptocurrency (BTC/USD)</h2>
+        <div id="crypto-price" class="price">Loading...</div>
+    </div>
 
-    <!-- Button to download the historical data -->
-    <a id="download-link" class="download-link" download="historical_data_15min.csv" href="#">Download CSV</a>
+    <div>
+        <h2>Forex (EUR/USD)</h2>
+        <div id="forex-price" class="price">Loading...</div>
+    </div>
+
+    <div>
+        <h2>Stock (AAPL)</h2>
+        <div id="stock-price" class="price">Loading...</div>
+    </div>
 
     <script>
-        const apiKey = '6ecda4d1ff2c4f0b91b7ddf7d7140721';  // Your Twelve Data API Key
-        const symbols = ['XAU/USD', 'BTC/USD', 'USD/JPY', 'USD/INR', 'EUR/USD'];  // List of assets
+        const apiKey = 'aEo1RAhZGkh1AbUv2a9EgmPS0MDZkJqZ'; // Your Polygon.io API key
 
-        // Function to fetch historical data for the last 24 hours (15-minute intervals)
-        async function fetchHistoricalData(symbol) {
-            const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=15min&outputsize=96&apikey=${apiKey}`;
-            const response = await fetch(url);
+        // Fetch Cryptocurrency Price (BTC/USD)
+        async function fetchCryptoPrice() {
+            const response = await fetch(`https://api.polygon.io/v1/last/crypto/BTCUSD?apiKey=${apiKey}`);
             const data = await response.json();
-            if (data.values) {
-                return data.values;  // Return the 24 hours of data in 15-minute intervals
-            } else {
-                console.error(`Error fetching data for ${symbol}:`, data);
-                return [];
-            }
+            document.getElementById('crypto-price').innerText = `Price: $${data.last.price}`;
         }
 
-        // Function to convert the datetime string (YYYY-MM-DD HH:mm:ss) to a valid Date object
-        function convertToLocalTime(utcTime) {
-            const formattedTime = utcTime.replace(' ', 'T') + 'Z';  // Convert to ISO 8601 format by replacing space with T and adding Z
-            const utcDate = new Date(formattedTime);  // Create Date object in UTC
-            return utcDate.toLocaleString();  // Convert to local machine time using user's local timezone
+        // Fetch Forex Price (EUR/USD)
+        async function fetchForexPrice() {
+            const response = await fetch(`https://api.polygon.io/v1/last/forex/EURUSD?apiKey=${apiKey}`);
+            const data = await response.json();
+            document.getElementById('forex-price').innerText = `Price: $${data.last.ask}`;
         }
 
-        // Function to render the data in the table
-        function renderTable(data) {
-            const dataBody = document.getElementById('data-body');
-            dataBody.innerHTML = '';  // Clear existing data
-
-            data.forEach(item => {
-                const row = `<tr>
-                    <td>${item.symbol}</td>
-                    <td>${convertToLocalTime(item.datetime)}</td>
-                    <td>${item.open}</td>
-                    <td>${item.high}</td>
-                    <td>${item.low}</td>
-                    <td>${item.close}</td>
-                </tr>`;
-                dataBody.innerHTML += row;
-            });
+        // Fetch Stock Price (AAPL)
+        async function fetchStockPrice() {
+            const response = await fetch(`https://api.polygon.io/v1/last/stocks/AAPL?apiKey=${apiKey}`);
+            const data = await response.json();
+            document.getElementById('stock-price').innerText = `Price: $${data.last.price}`;
         }
 
-        // Function to convert the data to CSV format
-        function convertToCSV(data) {
-            const csvRows = [];
-            csvRows.push(['Asset', 'Datetime (Local Time)', 'Open', 'High', 'Low', 'Close'].join(','));  // CSV header
+        // Call functions to load the data
+        fetchCryptoPrice();
+        fetchForexPrice();
+        fetchStockPrice();
 
-            data.forEach(item => {
-                csvRows.push([item.symbol, item.datetime, item.open, item.high, item.low, item.close].join(','));
-            });
-
-            return csvRows.join('\n');
-        }
-
-        // Function to create a CSV file and allow downloading
-        function downloadCSV(data) {
-            const csvContent = convertToCSV(data);
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const downloadLink = document.getElementById('download-link');
-            downloadLink.href = url;
-        }
-
-        // Main function to fetch data for all symbols and process it
-        async function getAllHistoricalData() {
-            let allData = [];
-
-            for (const symbol of symbols) {
-                const data = await fetchHistoricalData(symbol);
-                const formattedData = data.map(item => ({
-                    symbol: symbol,
-                    datetime: convertToLocalTime(item.datetime),  // Convert UTC to local time
-                    open: item.open,
-                    high: item.high,
-                    low: item.low,
-                    close: item.close
-                }));
-                allData = allData.concat(formattedData);  // Add to the combined data
-            }
-
-            renderTable(allData);  // Display data in the table
-            downloadCSV(allData);  // Prepare CSV download link
-        }
-
-        // Fetch data when the page loads
-        getAllHistoricalData();
     </script>
+
 </body>
 </html>
