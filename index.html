@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Historical Data Downloader (15-minute Intervals)</title>
+    <title>Historical Data Downloader (Bahrain Time)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -38,14 +38,14 @@
 </head>
 <body>
 
-    <h1>Download Last 24 Hours of Historical Data (15-minute Intervals)</h1>
+    <h1>Download Last 24 Hours of Historical Data (15-minute Intervals, Bahrain Time)</h1>
 
     <!-- Table to show the historical data -->
     <table id="data-table">
         <thead>
             <tr>
                 <th>Asset</th>
-                <th>Datetime</th>
+                <th>Datetime (Bahrain Time)</th>
                 <th>Open</th>
                 <th>High</th>
                 <th>Low</th>
@@ -58,11 +58,12 @@
     </table>
 
     <!-- Button to download the historical data -->
-    <a id="download-link" class="download-link" download="historical_data_15min.csv" href="#">Download CSV</a>
+    <a id="download-link" class="download-link" download="historical_data_15min_bahrain.csv" href="#">Download CSV</a>
 
     <script>
         const apiKey = '6ecda4d1ff2c4f0b91b7ddf7d7140721';  // Your Twelve Data API Key
         const symbols = ['XAU/USD', 'BTC/USD', 'USD/JPY', 'USD/INR', 'EUR/USD'];  // List of assets
+        const bahrainTimezoneOffset = 3 * 60; // Bahrain is UTC+3 in minutes
 
         // Function to fetch historical data for the last 24 hours (15-minute intervals)
         async function fetchHistoricalData(symbol) {
@@ -77,10 +78,17 @@
             }
         }
 
+        // Function to convert UTC time to Bahrain time (UTC+3)
+        function convertToBahrainTime(utcTime) {
+            const utcDate = new Date(utcTime + ' UTC'); // Create a UTC date object
+            const bahrainTime = new Date(utcDate.getTime() + bahrainTimezoneOffset * 60000); // Add Bahrain offset in milliseconds
+            return bahrainTime.toLocaleString('en-GB', { timeZone: 'Asia/Bahrain', hour12: false }); // Format as 'DD/MM/YYYY HH:MM:SS'
+        }
+
         // Function to convert the data to CSV format
         function convertToCSV(data) {
             const csvRows = [];
-            csvRows.push(['Asset', 'Datetime', 'Open', 'High', 'Low', 'Close'].join(','));  // CSV header
+            csvRows.push(['Asset', 'Datetime (Bahrain Time)', 'Open', 'High', 'Low', 'Close'].join(','));  // CSV header
 
             data.forEach(item => {
                 csvRows.push([item.symbol, item.datetime, item.open, item.high, item.low, item.close].join(','));
@@ -106,7 +114,7 @@
             data.forEach(item => {
                 const row = `<tr>
                     <td>${item.symbol}</td>
-                    <td>${item.datetime}</td>
+                    <td>${convertToBahrainTime(item.datetime)}</td>
                     <td>${item.open}</td>
                     <td>${item.high}</td>
                     <td>${item.low}</td>
@@ -124,7 +132,7 @@
                 const data = await fetchHistoricalData(symbol);
                 const formattedData = data.map(item => ({
                     symbol: symbol,
-                    datetime: item.datetime,
+                    datetime: convertToBahrainTime(item.datetime),  // Convert UTC to Bahrain time
                     open: item.open,
                     high: item.high,
                     low: item.low,
