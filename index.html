@@ -92,6 +92,24 @@
             return utcDate.toLocaleString('en-GB', { timeZone: timeZone, hour12: false });  // Convert to selected time zone
         }
 
+        // Function to render the data in the table
+        function renderTable(data, timeZone) {
+            const dataBody = document.getElementById('data-body');
+            dataBody.innerHTML = '';  // Clear existing data
+
+            data.forEach(item => {
+                const row = `<tr>
+                    <td>${item.symbol}</td>
+                    <td>${convertToLocalTime(item.datetime, timeZone)}</td>
+                    <td>${item.open}</td>
+                    <td>${item.high}</td>
+                    <td>${item.low}</td>
+                    <td>${item.close}</td>
+                </tr>`;
+                dataBody.innerHTML += row;
+            });
+        }
+
         // Function to convert the data to CSV format
         function convertToCSV(data) {
             const csvRows = [];
@@ -113,24 +131,6 @@
             downloadLink.href = url;
         }
 
-        // Function to render the data in the table
-        function renderTable(data, timeZone) {
-            const dataBody = document.getElementById('data-body');
-            dataBody.innerHTML = '';  // Clear existing data
-
-            data.forEach(item => {
-                const row = `<tr>
-                    <td>${item.symbol}</td>
-                    <td>${convertToLocalTime(item.datetime, timeZone)}</td>
-                    <td>${item.open}</td>
-                    <td>${item.high}</td>
-                    <td>${item.low}</td>
-                    <td>${item.close}</td>
-                </tr>`;
-                dataBody.innerHTML += row;
-            });
-        }
-
         // Main function to fetch data for all symbols and process it
         async function getAllHistoricalData() {
             let allData = [];
@@ -140,7 +140,7 @@
                 const data = await fetchHistoricalData(symbol);
                 const formattedData = data.map(item => ({
                     symbol: symbol,
-                    datetime: convertToLocalTime(item.datetime, timeZone),  // Convert UTC to selected local time
+                    datetime: convertToLocalTime(item.datetime, timeZone),  // Keep the original UTC time and convert for display
                     open: item.open,
                     high: item.high,
                     low: item.low,
