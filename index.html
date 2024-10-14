@@ -51,16 +51,29 @@
     <script>
         const apiKey = 'aEo1RAhZGkh1AbUv2a9EgmPS0MDZkJqZ';  // Your Polygon.io API key
 
+        // Function to round down the time to the nearest 15-minute interval
+        function roundDownToNearest15Minutes(date) {
+            const minutes = date.getMinutes();
+            const roundedMinutes = Math.floor(minutes / 15) * 15;  // Round down to nearest 15 minutes
+            date.setMinutes(roundedMinutes);
+            date.setSeconds(0, 0);  // Reset seconds and milliseconds
+            return date;
+        }
+
         // Function to fetch 15-minute interval data for the last 24 hours
         async function fetchCryptoData() {
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(today.getDate() - 1);  // Subtract 1 day to get the last 24 hours
+            // Get the current local time and round it down to the nearest 15 minutes
+            const now = new Date();
+            const roundedNow = roundDownToNearest15Minutes(new Date(now));
+
+            // Get the timestamp for 24 hours ago (rounded to 15 minutes)
+            const yesterday = new Date(roundedNow);
+            yesterday.setDate(roundedNow.getDate() - 1);  // Subtract 1 day
 
             const fromDate = yesterday.toISOString().split('T')[0];  // Get the "YYYY-MM-DD" format for 'from' date
-            const toDate = today.toISOString().split('T')[0];  // Get the "YYYY-MM-DD" format for 'to' date
+            const toDate = roundedNow.toISOString().split('T')[0];   // Get the "YYYY-MM-DD" format for 'to' date
 
-            // Polygon.io 15-minute data endpoint
+            // Polygon.io 15-minute data endpoint (fetch from 24 hours ago till the current rounded time)
             const url = `https://api.polygon.io/v2/aggs/ticker/X:BTCUSD/range/15/minute/${fromDate}/${toDate}?apiKey=${apiKey}`;
 
             const response = await fetch(url);
@@ -88,7 +101,10 @@
             }
         }
 
-        // Call the function when the page loads
+        // Set an interval to fetch data every 15 minutes
+        setInterval(fetchCryptoData, 15 * 60 * 1000);  // Fetch data every 15 minutes
+
+        // Fetch data immediately on page load
         fetchCryptoData();
 
     </script>
