@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Historical Data Downloader (Select Time Zone)</title>
+    <title>Historical Data Downloader (Local Time)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,15 +39,6 @@
 <body>
 
     <h1>Download Last 24 Hours of Historical Data (15-minute Intervals)</h1>
-
-    <!-- Dropdown to select time zone -->
-    <label for="time-zone">Select Time Zone:</label>
-    <select id="time-zone">
-        <option value="Asia/Kuwait" selected>Kuwait (UTC+3)</option>
-        <option value="Asia/Kolkata">India (UTC+5:30)</option>
-        <option value="Asia/Karachi">Pakistan (UTC+5)</option>
-        <option value="Asia/Dhaka">Bangladesh (UTC+6)</option>
-    </select>
 
     <!-- Table to show the historical data -->
     <table id="data-table">
@@ -86,21 +77,21 @@
             }
         }
 
-        // Function to convert UTC time to the selected time zone
-        function convertToLocalTime(utcTime, timeZone) {
+        // Function to convert UTC time to the user's local machine time
+        function convertToLocalTime(utcTime) {
             const utcDate = new Date(utcTime.replace(' ', 'T') + 'Z');  // Convert UTC time to ISO format
-            return utcDate.toLocaleString('en-GB', { timeZone: timeZone, hour12: false });  // Convert to selected time zone
+            return utcDate.toLocaleString();  // Convert to local machine time using user's local timezone
         }
 
         // Function to render the data in the table
-        function renderTable(data, timeZone) {
+        function renderTable(data) {
             const dataBody = document.getElementById('data-body');
             dataBody.innerHTML = '';  // Clear existing data
 
             data.forEach(item => {
                 const row = `<tr>
                     <td>${item.symbol}</td>
-                    <td>${convertToLocalTime(item.datetime, timeZone)}</td>
+                    <td>${convertToLocalTime(item.datetime)}</td>
                     <td>${item.open}</td>
                     <td>${item.high}</td>
                     <td>${item.low}</td>
@@ -134,13 +125,12 @@
         // Main function to fetch data for all symbols and process it
         async function getAllHistoricalData() {
             let allData = [];
-            const timeZone = document.getElementById('time-zone').value;  // Get selected time zone
 
             for (const symbol of symbols) {
                 const data = await fetchHistoricalData(symbol);
                 const formattedData = data.map(item => ({
                     symbol: symbol,
-                    datetime: convertToLocalTime(item.datetime, timeZone),  // Keep the original UTC time and convert for display
+                    datetime: convertToLocalTime(item.datetime),  // Convert UTC to local time
                     open: item.open,
                     high: item.high,
                     low: item.low,
@@ -149,15 +139,12 @@
                 allData = allData.concat(formattedData);  // Add to the combined data
             }
 
-            renderTable(allData, timeZone);  // Display data in the table
+            renderTable(allData);  // Display data in the table
             downloadCSV(allData);  // Prepare CSV download link
         }
 
         // Fetch data when the page loads
         getAllHistoricalData();
-
-        // Fetch new data whenever the time zone is changed
-        document.getElementById('time-zone').addEventListener('change', getAllHistoricalData);
     </script>
 </body>
 </html>
