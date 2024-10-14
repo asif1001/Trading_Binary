@@ -63,7 +63,6 @@
     <script>
         const apiKey = '6ecda4d1ff2c4f0b91b7ddf7d7140721';  // Your Twelve Data API Key
         const symbols = ['XAU/USD', 'BTC/USD', 'USD/JPY', 'USD/INR', 'EUR/USD'];  // List of assets
-        const bahrainTimezoneOffset = 3 * 60; // Bahrain is UTC+3 in minutes
 
         // Function to fetch historical data for the last 24 hours (15-minute intervals)
         async function fetchHistoricalData(symbol) {
@@ -80,9 +79,10 @@
 
         // Function to convert UTC time to Bahrain time (UTC+3)
         function convertToBahrainTime(utcTime) {
-            const utcDate = new Date(utcTime + ' UTC'); // Create a UTC date object
-            const bahrainTime = new Date(utcDate.getTime() + bahrainTimezoneOffset * 60000); // Add Bahrain offset in milliseconds
-            return bahrainTime.toLocaleString('en-GB', { timeZone: 'Asia/Bahrain', hour12: false }); // Format as 'DD/MM/YYYY HH:MM:SS'
+            const utcDate = new Date(utcTime.replace(' ', 'T') + 'Z');  // Convert UTC time to a valid ISO string
+            const bahrainOffset = 3 * 60 * 60 * 1000;  // Bahrain is UTC+3 in milliseconds
+            const bahrainTime = new Date(utcDate.getTime() + bahrainOffset);  // Add the Bahrain offset
+            return bahrainTime.toLocaleString('en-GB', { timeZone: 'Asia/Bahrain', hour12: false });  // Format time
         }
 
         // Function to convert the data to CSV format
