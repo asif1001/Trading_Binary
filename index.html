@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Polygon.io Candlestick Chart</title>
+    <title>Candlestick Chart with Buy/Sell Signals</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,16 +15,24 @@
             max-width: 800px;
             margin: 0 auto;
         }
+        #signal {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
     </style>
     <!-- Include ApexCharts library -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 <body>
 
-    <h1>BTC/USD Candlestick Chart (Last 24 Hours)</h1>
+    <h1>BTC/USD Candlestick Chart with Buy/Sell Signals</h1>
 
     <!-- Div to hold the chart -->
     <div id="chart"></div>
+
+    <!-- Div to hold the signal -->
+    <div id="signal">Loading signal...</div>
 
     <script>
         const apiKey = 'aEo1RAhZGkh1AbUv2a9EgmPS0MDZkJqZ';  // Your Polygon.io API key
@@ -67,6 +75,9 @@
 
                 // Create the candlestick chart using ApexCharts
                 renderCandlestickChart(candlestickData);
+
+                // Analyze the data for buy/sell signals
+                analyzeDataForSignals(data.results);
             } else {
                 console.error('No data available');
             }
@@ -98,6 +109,44 @@
 
             var chart = new ApexCharts(document.querySelector("#chart"), options);
             chart.render();
+        }
+
+        // Function to analyze the data for candlestick patterns and signals
+        function analyzeDataForSignals(data) {
+            const lastCandle = data[data.length - 1];  // Get the latest candle
+
+            let signal = '';
+            let sl = '';
+            let tp1 = '';
+            let tp2 = '';
+            let tp3 = '';
+
+            // Example of detecting a bullish engulfing pattern
+            const prevCandle = data[data.length - 2];
+            if (prevCandle.c < prevCandle.o && lastCandle.c > lastCandle.o && lastCandle.c > prevCandle.o) {
+                signal = 'Bullish Engulfing detected. Suggest BUY.';
+                sl = (lastCandle.l - 50).toFixed(2);  // Example SL calculation
+                tp1 = (lastCandle.c + 50).toFixed(2);  // Example TP1 calculation
+                tp2 = (lastCandle.c + 100).toFixed(2);  // Example TP2 calculation
+                tp3 = (lastCandle.c + 150).toFixed(2);  // Example TP3 calculation
+            } else if (prevCandle.c > prevCandle.o && lastCandle.c < lastCandle.o && lastCandle.c < prevCandle.o) {
+                signal = 'Bearish Engulfing detected. Suggest SELL.';
+                sl = (lastCandle.h + 50).toFixed(2);  // Example SL calculation
+                tp1 = (lastCandle.c - 50).toFixed(2);  // Example TP1 calculation
+                tp2 = (lastCandle.c - 100).toFixed(2);  // Example TP2 calculation
+                tp3 = (lastCandle.c - 150).toFixed(2);  // Example TP3 calculation
+            } else {
+                signal = 'No significant pattern detected.';
+            }
+
+            // Display the signal with SL and TP levels
+            document.getElementById('signal').innerHTML = `
+                ${signal} <br/>
+                Stop Loss: ${sl} <br/>
+                Take Profit 1: ${tp1} <br/>
+                Take Profit 2: ${tp2} <br/>
+                Take Profit 3: ${tp3}
+            `;
         }
 
         // Fetch the data and create the chart when the page loads
