@@ -37,6 +37,24 @@
         #news-section h3 {
             margin-bottom: 10px;
         }
+        #last-updated {
+            margin-top: 20px;
+            font-size: 14px;
+            color: grey;
+            text-align: right;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
     <!-- Include ApexCharts library -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -46,13 +64,15 @@
     <!-- Sidebar for asset selection -->
     <div id="sidebar">
         <h3>Select Asset</h3>
-        <select id="asset-selector" onchange="fetchCryptoData()">
+        <select id="asset-selector">
             <option value="X:BTCUSD">BTC/USD</option>
             <option value="X:XAUSD">Gold (XAU/USD)</option>
             <option value="C:EURUSD">EUR/USD</option>
             <option value="C:USDJPY">USD/JPY</option>
             <option value="C:GBPUSD">GBP/USD</option>
         </select>
+        <!-- Button to update chart and news -->
+        <button onclick="updateChartAndNews()">Update Chart and News</button>
     </div>
 
     <!-- Main content area (chart and signals) -->
@@ -60,6 +80,8 @@
         <h1>Asset Candlestick Chart with Buy/Sell Signals</h1>
         <div id="chart"></div>
         <div id="signal">Loading signal...</div>
+        <!-- Last updated time -->
+        <div id="last-updated">Last Updated: --</div>
     </div>
 
     <!-- News section -->
@@ -83,8 +105,6 @@
 
         // Function to fetch 15-minute interval data for the last 24 hours
         async function fetchCryptoData() {
-            const asset = document.getElementById('asset-selector').value;
-            selectedAsset = asset;  // Update selected asset
             const now = new Date();
             const roundedNow = roundDownToNearest15Minutes(new Date(now));
             const yesterday = new Date(roundedNow);
@@ -94,7 +114,7 @@
             const toDate = roundedNow.toISOString().split('T')[0];   // Get the "YYYY-MM-DD" format for 'to' date
 
             // Polygon.io 15-minute data endpoint (fetch from 24 hours ago till the current rounded time)
-            const url = `https://api.polygon.io/v2/aggs/ticker/${asset}/range/15/minute/${fromDate}/${toDate}?apiKey=${apiKey}`;
+            const url = `https://api.polygon.io/v2/aggs/ticker/${selectedAsset}/range/15/minute/${fromDate}/${toDate}?apiKey=${apiKey}`;
 
             const response = await fetch(url);
             const data = await response.json();
@@ -113,8 +133,8 @@
                 // Analyze the data for buy/sell signals
                 analyzeDataForSignals(data.results);
 
-                // Fetch and update the news section
-                fetchMarketNews();
+                // Update the last updated time
+                updateLastUpdatedTime();
             } else {
                 console.error('No data available');
             }
@@ -184,7 +204,14 @@
             `;
         }
 
-        // Function to fetch market news and predictions
+        // Function to update the last updated time
+        function updateLastUpdatedTime() {
+            const now = new Date();
+            const formattedTime = now.toLocaleString();  // Get local time as a formatted string
+            document.getElementById('last-updated').innerText = `Last Updated: ${formattedTime}`;
+        }
+
+        // Function to fetch market news and predictions (replace with actual API if needed)
         function fetchMarketNews() {
             const assetName = document.getElementById('asset-selector').options[document.getElementById('asset-selector').selectedIndex].text;
             document.getElementById('news-content').innerHTML = `
@@ -197,8 +224,15 @@
             `;
         }
 
-        // Fetch the data and create the chart when the page loads
-        fetchCryptoData();
+        // Function to update the chart and market news when the button is clicked
+        function updateChartAndNews() {
+            selectedAsset = document.getElementById('asset-selector').value;
+            fetchCryptoData();
+            fetchMarketNews();  // Fetch market news for the selected asset
+        }
+
+        // Fetch the data and create the chart when the page loads (default asset)
+        updateChartAndNews();
     </script>
 
 </body>
