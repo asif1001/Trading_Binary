@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Candlestick Chart with Buy/Sell Signals</title>
+    <title>Candlestick Chart with Pattern Detection</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -94,24 +94,13 @@
         const apiKey = 'aEo1RAhZGkh1AbUv2a9EgmPS0MDZkJqZ';  // Your Polygon.io API key
         let selectedAsset = 'X:BTCUSD';  // Default asset
 
-        // Function to round down the time to the nearest 15-minute interval
-        function roundDownToNearest15Minutes(date) {
-            const minutes = date.getMinutes();
-            const roundedMinutes = Math.floor(minutes / 15) * 15;  // Round down to nearest 15 minutes
-            date.setMinutes(roundedMinutes);
-            date.setSeconds(0, 0);  // Reset seconds and milliseconds
-            return date;
-        }
-
-        // Function to fetch 15-minute interval data for the last 24 hours
+        // Function to fetch 15-minute interval data for the last 24 hours from the current time
         async function fetchCryptoData() {
             const now = new Date();
-            const roundedNow = roundDownToNearest15Minutes(new Date(now));
-            const yesterday = new Date(roundedNow);
-            yesterday.setDate(roundedNow.getDate() - 1);  // Subtract 1 day
+            const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));  // 24 hours ago
 
             const fromDate = yesterday.toISOString().split('T')[0];  // Get the "YYYY-MM-DD" format for 'from' date
-            const toDate = roundedNow.toISOString().split('T')[0];   // Get the "YYYY-MM-DD" format for 'to' date
+            const toDate = now.toISOString().split('T')[0];   // Get the "YYYY-MM-DD" format for 'to' date
 
             // Polygon.io 15-minute data endpoint (fetch from 24 hours ago till the current rounded time)
             const url = `https://api.polygon.io/v2/aggs/ticker/${selectedAsset}/range/15/minute/${fromDate}/${toDate}?apiKey=${apiKey}`;
@@ -179,6 +168,7 @@
             let tp2 = '';
             let tp3 = '';
 
+            // Detect Bullish or Bearish Engulfing pattern
             if (prevCandle.c < prevCandle.o && lastCandle.c > lastCandle.o && lastCandle.c > prevCandle.o) {
                 signal = 'Bullish Engulfing detected. Suggest BUY.';
                 sl = (lastCandle.l - 50).toFixed(2);  // Example SL calculation
