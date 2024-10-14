@@ -1,24 +1,97 @@
-{
-  "ticker": "X:BTCUSD",
-  "results": [
-    {
-      "v": 18.84,        // Volume
-      "o": 45023.15,     // Open price
-      "c": 45123.45,     // Close price
-      "h": 45212.23,     // High price
-      "l": 44990.00,     // Low price
-      "t": 1631228400000 // Timestamp in milliseconds
-    },
-    {
-      "v": 15.12,
-      "o": 45123.45,
-      "c": 45089.67,
-      "h": 45200.78,
-      "l": 45000.56,
-      "t": 1631229300000
-    }
-  ],
-  "queryCount": 2,
-  "resultsCount": 2,
-  "status": "OK"
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Polygon.io 15-Minute Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>15-Minute Interval Data from Polygon.io (Last 24 Hours)</h1>
+
+    <div>
+        <h2>Cryptocurrency (BTC/USD)</h2>
+        <table id="crypto-data">
+            <thead>
+                <tr>
+                    <th>Time (UTC)</th>
+                    <th>Open</th>
+                    <th>High</th>
+                    <th>Low</th>
+                    <th>Close</th>
+                    <th>Volume</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiKey = 'aEo1RAhZGkh1AbUv2a9EgmPS0MDZkJqZ';  // Your Polygon.io API key
+
+        // Function to fetch 15-minute interval data for the last 24 hours
+        async function fetchCryptoData() {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);  // Subtract 1 day to get the last 24 hours
+
+            const fromDate = yesterday.toISOString().split('T')[0];  // Get the "YYYY-MM-DD" format for 'from' date
+            const toDate = today.toISOString().split('T')[0];  // Get the "YYYY-MM-DD" format for 'to' date
+
+            // Polygon.io 15-minute data endpoint
+            const url = `https://api.polygon.io/v2/aggs/ticker/X:BTCUSD/range/15/minute/${fromDate}/${toDate}?apiKey=${apiKey}`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.results && data.results.length > 0) {
+                const tbody = document.querySelector('#crypto-data tbody');
+                tbody.innerHTML = '';  // Clear existing rows
+
+                data.results.forEach(result => {
+                    const row = document.createElement('tr');
+                    const timestamp = new Date(result.t).toUTCString();  // Convert the timestamp to a human-readable format
+                    row.innerHTML = `
+                        <td>${timestamp}</td>
+                        <td>${result.o.toFixed(2)}</td>
+                        <td>${result.h.toFixed(2)}</td>
+                        <td>${result.l.toFixed(2)}</td>
+                        <td>${result.c.toFixed(2)}</td>
+                        <td>${result.v.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                console.error('No data available');
+            }
+        }
+
+        // Call the function when the page loads
+        fetchCryptoData();
+
+    </script>
+
+</body>
+</html>
