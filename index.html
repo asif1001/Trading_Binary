@@ -4,49 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Polygon.io 15-Minute Data</title>
+    <title>Polygon.io Candlestick Chart</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
         }
-        table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid black;
-            padding: 10px;
-        }
-        th {
-            background-color: #f2f2f2;
+        #chart {
+            max-width: 800px;
+            margin: 0 auto;
         }
     </style>
+    <!-- Include ApexCharts library -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 <body>
 
-    <h1>15-Minute Interval Data from Polygon.io (Bahrain Local Time)</h1>
+    <h1>BTC/USD Candlestick Chart (Last 24 Hours)</h1>
 
-    <div>
-        <h2>Cryptocurrency (BTC/USD)</h2>
-        <table id="crypto-data">
-            <thead>
-                <tr>
-                    <th>Time (Bahrain Local Time)</th>
-                    <th>Open</th>
-                    <th>High</th>
-                    <th>Low</th>
-                    <th>Close</th>
-                    <th>Volume</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Data will be inserted here -->
-            </tbody>
-        </table>
-    </div>
+    <!-- Div to hold the chart -->
+    <div id="chart"></div>
 
     <script>
         const apiKey = 'aEo1RAhZGkh1AbUv2a9EgmPS0MDZkJqZ';  // Your Polygon.io API key
@@ -80,34 +58,49 @@
             const data = await response.json();
 
             if (data.results && data.results.length > 0) {
-                const tbody = document.querySelector('#crypto-data tbody');
-                tbody.innerHTML = '';  // Clear existing rows
-
-                data.results.forEach(result => {
-                    const row = document.createElement('tr');
-                    
-                    // Convert the timestamp to Bahrain local time using 'Asia/Bahrain' timezone
-                    const timestamp = new Date(result.t).toLocaleString('en-GB', { timeZone: 'Asia/Bahrain' });
-
-                    row.innerHTML = `
-                        <td>${timestamp}</td>
-                        <td>${result.o.toFixed(2)}</td>
-                        <td>${result.h.toFixed(2)}</td>
-                        <td>${result.l.toFixed(2)}</td>
-                        <td>${result.c.toFixed(2)}</td>
-                        <td>${result.v.toFixed(2)}</td>
-                    `;
-                    tbody.appendChild(row);
+                const candlestickData = data.results.map(result => {
+                    return {
+                        x: new Date(result.t),  // X-axis (time)
+                        y: [result.o, result.h, result.l, result.c]  // Candlestick data (open, high, low, close)
+                    };
                 });
+
+                // Create the candlestick chart using ApexCharts
+                renderCandlestickChart(candlestickData);
             } else {
                 console.error('No data available');
             }
         }
 
-        // Set an interval to fetch data every 15 minutes
-        setInterval(fetchCryptoData, 15 * 60 * 1000);  // Fetch data every 15 minutes
+        // Function to render the candlestick chart using ApexCharts
+        function renderCandlestickChart(seriesData) {
+            var options = {
+                chart: {
+                    type: 'candlestick',
+                    height: 350
+                },
+                series: [{
+                    data: seriesData
+                }],
+                title: {
+                    text: 'BTC/USD 15-Minute Candlestick Chart (Last 24 Hours)',
+                    align: 'left'
+                },
+                xaxis: {
+                    type: 'datetime'
+                },
+                yaxis: {
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            };
 
-        // Fetch data immediately on page load
+            var chart = new ApexCharts(document.querySelector("#chart"), options);
+            chart.render();
+        }
+
+        // Fetch the data and create the chart when the page loads
         fetchCryptoData();
 
     </script>
